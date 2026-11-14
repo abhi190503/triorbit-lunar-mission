@@ -14,4 +14,5 @@ export * from './ModuleHotspot';
 export * from './ResourceGauge';
 export * from './MissionHUD';
 export * from './ActionControls';
+export * from './MissionScreen';
 export * from './shell';
