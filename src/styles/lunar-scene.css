@@ -214,6 +214,7 @@
   padding: 0.375rem 0.625rem;
   font-size: 0.6875rem;
   white-space: nowrap;
+  max-width: min(240px, calc(100vw - 2rem));
   z-index: 10;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
 }
@@ -223,6 +224,28 @@
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Tooltip edge alignments to prevent clipping against container boundaries */
+.lunar-hotspot--align-left .lunar-hotspot-telemetry {
+  left: 0;
+  transform: translateY(4px);
+}
+
+.lunar-hotspot--align-left:hover:not(:disabled) .lunar-hotspot-telemetry,
+.lunar-hotspot--align-left:focus-visible:not(:disabled) .lunar-hotspot-telemetry {
+  transform: translateY(0);
+}
+
+.lunar-hotspot--align-right .lunar-hotspot-telemetry {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+
+.lunar-hotspot--align-right:hover:not(:disabled) .lunar-hotspot-telemetry,
+.lunar-hotspot--align-right:focus-visible:not(:disabled) .lunar-hotspot-telemetry {
+  transform: translateY(0);
 }
 
 /* ============================================================================
@@ -240,6 +263,13 @@
 @media (min-width: 640px) {
   .lunar-mobile-strip {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* On desktop (>= 1024px), direct scene hotspot clicking is prioritized without duplicate selector clutter */
+@media (min-width: 1024px) {
+  .lunar-mobile-strip {
+    display: none;
   }
 }
 
@@ -336,8 +366,10 @@
     transform: none !important;
   }
 
-  .lunar-hotspot-telemetry {
-    transform: translateX(-50%) !important;
+  .lunar-hotspot-telemetry,
+  .lunar-hotspot--align-left .lunar-hotspot-telemetry,
+  .lunar-hotspot--align-right .lunar-hotspot-telemetry {
+    transform: none !important;
   }
 }
 

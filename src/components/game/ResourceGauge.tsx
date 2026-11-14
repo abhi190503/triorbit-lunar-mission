@@ -408,7 +408,7 @@ export function ResourceGauge({
             >
               {clampedValue}
             </span>
-            <span className="font-mono text-[10px] text-text-dim ml-0.5">
+            <span className="font-mono text-[10px] text-[#8FA2BA] ml-0.5">
               / 100
             </span>
           </div>
@@ -454,7 +454,7 @@ export function ResourceGauge({
         {/* Adverse Educational Note for young learners */}
         {meta.isAdverse && !compact && (
           <div className="flex items-center justify-between text-[10px] text-text-muted pt-0.5">
-            <span className="text-text-dim italic">
+            <span className="text-text-muted italic">
               Lower is safer (0 = Safe, 100 = Mission Failure)
             </span>
             {statusInfo.isCritical && (

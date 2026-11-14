@@ -200,6 +200,12 @@ export function MissionHUD({
   const finishDisabled = isFinishDayDisabled(outcome, phase, disabled);
   const finishHelpText = getFinishDayHelpText(outcome, phase, actionsRemaining);
 
+  const handleFinishDayClick = React.useCallback(() => {
+    if (!finishDisabled && onFinishDay) {
+      onFinishDay();
+    }
+  }, [finishDisabled, onFinishDay]);
+
   const boundedDay = Math.max(1, Math.min(TOTAL_MISSION_DAYS, day));
   const boundedActions = Math.max(0, Math.min(MAX_ACTIONS_PER_DAY, actionsRemaining));
 
@@ -333,7 +339,7 @@ export function MissionHUD({
                   w-4 h-4 rounded-md flex items-center justify-center text-[10px] font-mono font-bold transition-all
                   ${isFilled
                     ? 'bg-[#60E5F4] text-[#080F20] shadow-[0_0_8px_rgba(96,229,244,0.4)]'
-                    : 'bg-[#080F20] border border-[#1F3352] text-text-dim'
+                    : 'bg-[#080F20] border border-[#1F3352] text-[#8FA2BA]'
                   }
                 `}
               >
@@ -355,7 +361,7 @@ export function MissionHUD({
           <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-text-muted">
             Life Support Vitals (0–100)
           </span>
-          <span className="text-[9px] font-mono text-text-dim">
+          <span className="text-[9px] font-mono text-text-muted">
             Daily Drain: -14 to -16
           </span>
         </div>
@@ -382,8 +388,8 @@ export function MissionHUD({
           size="md"
           fullWidth
           disabled={finishDisabled}
-          onClick={onFinishDay}
-          className="min-h-[48px] text-sm font-bold tracking-wide"
+          onClick={handleFinishDayClick}
+          className="min-h-[48px] text-sm font-bold tracking-wide cursor-pointer"
           aria-describedby="hud-finish-day-help"
         >
           {phase === 'event'

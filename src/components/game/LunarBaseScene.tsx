@@ -240,7 +240,7 @@ export function LunarBaseScene({
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-electric animate-pulse inline-block" />
             OUTPOST TELEMETRY NOMINAL
           </span>
-          <span className="hidden sm:inline text-[10px] text-text-dim">
+          <span className="hidden sm:inline text-[10px] text-text-muted">
             Fictional Habitat Visualization • 4 Interactive Modules
           </span>
           {typeof actionsRemaining === 'number' && (
@@ -251,11 +251,11 @@ export function LunarBaseScene({
         </div>
       </div>
 
-      {/* Accessible Mobile Facility Selector Strip (< 640px and high-accessibility fallback) */}
+      {/* Accessible Mobile Facility Selector Strip (< 640px and high-accessibility fallback, hidden on lg desktop where direct hotspots are used) */}
       {showMobileSelector && (
         <nav
           aria-label="Facility Selector Quick Bar"
-          className="lunar-mobile-strip w-full grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1"
+          className="lunar-mobile-strip w-full grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1 lg:hidden"
         >
           {modules.map((module) => {
             const isSelected = selectedModuleId === module.id;
