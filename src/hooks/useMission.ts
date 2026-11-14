@@ -31,6 +31,7 @@ import {
   STORAGE_KEY,
   type SavedMissionSummary,
 } from '@/lib/game/persistence';
+import { DEFAULT_SCENARIOS } from '@/lib/game/constants';
 
 export interface UseMissionOptions {
   initialState?: GameState;
@@ -62,11 +63,17 @@ export function useMission({
   autoSave = true,
   onMissionComplete,
 }: UseMissionOptions = {}) {
+  // Authoritative simulation state initialized from prop or saved progress
   const [gameState, setGameState] = useState<GameState>(() => {
     if (initialState) return initialState;
+    const saved = loadSavedMission();
+    if (saved && saved.outcome === 'active') {
+      return saved;
+    }
     return createInitialMission();
   });
 
+  // Sync external storage state for cross-tab or external changes
   const rawSaveString = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
   const savedSummary: SavedMissionSummary | null = useMemo(() => {
@@ -103,7 +110,7 @@ export function useMission({
     }
   }, [gameState, onMissionComplete]);
 
-  // Execute maintenance action
+  // Execute maintenance action via canonical controller
   const handleExecuteAction = useCallback((actionId: ActionId): ActionResult => {
     let result: ActionResult = {
       success: false,
@@ -112,19 +119,29 @@ export function useMission({
     };
 
     setGameState((prev) => {
-      result = executeAction(prev, actionId);
-      return result.state;
+      const res = executeAction(prev, actionId);
+      result = res;
+      return res.success ? res.state : prev;
     });
 
     return result;
   }, [gameState]);
 
-  // Apply dilemma choice
-  const handleApplyEventChoice = useCallback((scenarioId: string, choiceId: string) => {
-    setGameState((prev) => applyEventChoice(prev, scenarioId, choiceId));
-  }, []);
+  // Apply dilemma choice via canonical controller
+  const handleApplyEventChoice = useCallback(
+    (scenarioId: string, choiceId: string): GameState => {
+      let outcome = gameState;
+      setGameState((prev) => {
+        const next = applyEventChoice(prev, scenarioId, choiceId, DEFAULT_SCENARIOS);
+        outcome = next;
+        return next;
+      });
+      return outcome;
+    },
+    [gameState]
+  );
 
-  // Conclude day
+  // Conclude mission day and apply nightly baseline drain
   const handleExecuteFinishDay = useCallback((): FinishDayResult => {
     let result: FinishDayResult = {
       success: false,
@@ -133,21 +150,23 @@ export function useMission({
     };
 
     setGameState((prev) => {
-      result = executeFinishDay(prev);
-      return result.state;
+      const res = executeFinishDay(prev);
+      result = res;
+      return res.success ? res.state : prev;
     });
 
     return result;
   }, [gameState]);
 
-  // Replay mission from fresh baseline
-  const handleReplayMission = useCallback(() => {
+  // Replay mission: clear save and reset to fresh Day 1 baseline
+  const handleReplayMission = useCallback((): GameState => {
     clearSavedMission();
     const fresh = createInitialMission();
     setGameState(fresh);
+    return fresh;
   }, []);
 
-  // Resume saved mission if present
+  // Resume saved mission if present in storage
   const handleResumeSavedMission = useCallback((): boolean => {
     const saved = loadSavedMission();
     if (saved && saved.outcome === 'active') {
