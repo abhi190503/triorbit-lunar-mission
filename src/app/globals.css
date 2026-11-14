@@ -1,0 +1,174 @@
+@import "tailwindcss";
+@import "../styles/lunar-scene.css";
+
+@theme {
+  --color-space-deep: #080f20;
+  --color-lunar-navy: #101d35;
+  --color-panel-surface: #162640;
+  --color-surface-elevated: #203653;
+  --color-cyan-electric: #60e5f4;
+  --color-blue-lunar: #5c9cff;
+  --color-amber-solar: #ffca72;
+  --color-green-oxygen: #59dda5;
+  --color-orange-warning: #ff9f5a;
+  --color-coral-danger: #ff6b73;
+  --color-moon-white: #f4f7fc;
+  --color-text-muted: #a8b8d0;
+  --color-text-dim: #5a6e85;
+  --color-border-subtle: #1f3352;
+  --color-border-glow: #38bdf8;
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --shadow-panel: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(96, 229, 244, 0.08);
+  --shadow-glow-cyan: 0 0 16px 2px rgba(96, 229, 244, 0.35);
+  --shadow-glow-amber: 0 0 16px 2px rgba(255, 202, 114, 0.35);
+  --shadow-glow-coral: 0 0 20px 4px rgba(255, 107, 115, 0.45);
+}
+
+:root {
+  --background: #080f20;
+  --foreground: #f4f7fc;
+
+  --color-space-deep: #080f20;
+  --color-lunar-navy: #101d35;
+  --color-panel-surface: #162640;
+  --color-surface-elevated: #203653;
+  --color-cyan-electric: #60e5f4;
+  --color-blue-lunar: #5c9cff;
+  --color-amber-solar: #ffca72;
+  --color-green-oxygen: #59dda5;
+  --color-orange-warning: #ff9f5a;
+  --color-coral-danger: #ff6b73;
+  --color-moon-white: #f4f7fc;
+  --color-text-muted: #a8b8d0;
+  --color-text-dim: #5a6e85;
+  --color-border-subtle: #1f3352;
+  --color-border-glow: #38bdf8;
+
+  --shadow-panel: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(96, 229, 244, 0.08);
+  --shadow-glow-cyan: 0 0 16px 2px rgba(96, 229, 244, 0.35);
+  --shadow-glow-amber: 0 0 16px 2px rgba(255, 202, 114, 0.35);
+  --shadow-glow-coral: 0 0 20px 4px rgba(255, 107, 115, 0.45);
+  --backdrop-scrim: rgba(4, 8, 18, 0.85);
+
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --ease-out-space: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out-space: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+  background-color: var(--color-space-deep);
+  color: var(--color-moon-white);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Atmospheric Space Background Gradients */
+.bg-space-mesh {
+  background-color: #080f20;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(96, 229, 244, 0.08), transparent 60%),
+    radial-gradient(circle 600px at 90% 80%, rgba(92, 156, 255, 0.05), transparent 70%),
+    radial-gradient(circle 400px at 10% 90%, rgba(255, 202, 114, 0.03), transparent 60%);
+}
+
+/* Keyframe Animations */
+@keyframes pulse-beacon {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(96, 229, 244, 0.7);
+  }
+  70% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 12px rgba(96, 229, 244, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(96, 229, 244, 0);
+  }
+}
+
+@keyframes glow-pulse-alert {
+  0%, 100% {
+    border-color: #ff6b73;
+    box-shadow: 0 0 12px rgba(255, 107, 115, 0.4);
+  }
+  50% {
+    border-color: #ff9f5a;
+    box-shadow: 0 0 20px rgba(255, 159, 90, 0.55);
+  }
+}
+
+.animate-beacon {
+  animation: pulse-beacon 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.animate-alert-pulse {
+  animation: glow-pulse-alert 1.2s infinite ease-in-out;
+}
+
+/* Accessible focus ring utilities */
+.focus-ring {
+  outline: 2px solid var(--color-cyan-electric);
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cyan-electric);
+  outline-offset: 2px;
+}
+
+/* Touch targets */
+.touch-target-desktop {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.touch-target-mobile {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+/* High contrast custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080f20;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f3352;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+}
+
+/* Reduced Motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-beacon,
+  .animate-alert-pulse,
+  .animate-pulse,
+  .animate-ping {
+    animation: none !important;
+  }
+}

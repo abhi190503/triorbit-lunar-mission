@@ -58,6 +58,7 @@ All canonical planning assets, specifications, and task prompts are committed in
 - [PARALLEL_START_PLAN.md](planning/PARALLEL_START_PLAN.md) — Authoritative parallel execution plan
 - [OWNERSHIP_AND_DEPENDENCIES.md](planning/OWNERSHIP_AND_DEPENDENCIES.md) — 31-task ownership and dependency matrix
 - [GITHUB_WORKFLOW.md](planning/GITHUB_WORKFLOW.md) — Branching, commit conventions, and review rules
+- [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md) — **Frozen Product Requirements & Scope (TRI-001 Approved)**
 - [PROJECT_SPEC.md](planning/PROJECT_SPEC.md) — Functional specifications & constraints
 - [GAME_RULES.md](planning/GAME_RULES.md) — Core mechanics, resource formulas, and outcome rules
 - [INTERFACES.md](planning/INTERFACES.md) — Frozen TypeScript DTOs and API contract
