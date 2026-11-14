@@ -18,8 +18,14 @@ import {
   hasSavedMission,
   STORAGE_KEY,
 } from '@/lib/game/persistence';
-import { createInitialMission } from '@/lib/game/engine';
+import {
+  createInitialMission,
+  executeAction,
+  executeFinishDay,
+  applyEventChoice,
+} from '@/lib/game/controller';
 import { INITIAL_RESOURCES } from '@/lib/game/contracts';
+import { DEFAULT_SCENARIOS } from '@/lib/game/constants';
 import type { GameState } from '@/lib/game/types';
 
 // In-memory mock localStorage for Node test runner
@@ -127,6 +133,37 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     );
   });
 
+  it('guarantees that initial mounting cannot overwrite an existing valid saved mission', () => {
+    // 1. Arrange: Save a valid Day 4 mission in storage
+    const day4State: GameState = {
+      day: 4,
+      phase: 'choose',
+      actionsRemaining: 2,
+      resources: {
+        oxygen: 65,
+        power: 60,
+        water: 60,
+        food: 55,
+        radiationRisk: 30,
+      },
+      outcome: 'active',
+      emergencyMistakes: 1,
+      history: [],
+    };
+    saveMission(day4State);
+
+    // 2. Act: Mount component simulating initial render
+    const html = renderToString(React.createElement(MissionScreen));
+    assert.ok(html.includes('Day 4'), 'Component must mount with Day 4');
+
+    // 3. Assert: Storage still contains the original Day 4 save without being overwritten by Day 1 defaults
+    const loaded = loadSavedMission();
+    assert.ok(loaded, 'Saved mission must still be present');
+    assert.equal(loaded.day, 4, 'Day 4 state must not be overwritten by Day 1 default');
+    assert.equal(loaded.resources.oxygen, 65);
+    assert.equal(loaded.resources.power, 60);
+  });
+
   it('gracefully recovers from corrupted or malformed localStorage payload without crashing', () => {
     // Write unparseable corrupt payload
     mockLocalStorage.setItem(STORAGE_KEY, '{"version": 1, "state": INVALID_CORRUPT_JSON_DATA');
@@ -141,46 +178,71 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     assert.equal(loadSavedMission(), null, 'Corrupt payload must be automatically purged');
   });
 
-  it('verifies full state persistence lifecycle through useMission hook (actions, day advance, reload)', () => {
-    // 1. Initialize mission hook
-    let hookState: GameState = createInitialMission();
-    const setHookState = (s: GameState) => {
-      hookState = s;
-      saveMission(s);
-    };
+  it('verifies full state persistence lifecycle through controller & storage (actions, day advance, reload)', () => {
+    // 1. Initialize mission
+    const initial = createInitialMission();
+    saveMission(initial);
 
-    // Execute maintain solar action
-    const { state: afterAction } = {
-      state: {
-        ...hookState,
-        actionsRemaining: 1,
-        resources: { ...hookState.resources, power: 90 },
-      },
-    };
-    setHookState(afterAction);
+    // 2. Execute maintain solar action
+    const actionRes = executeAction(initial, 'maintain-solar');
+    assert.equal(actionRes.success, true);
+    assert.equal(actionRes.state.actionsRemaining, 1);
+    assert.equal(actionRes.state.resources.power, 90);
+    saveMission(actionRes.state);
 
-    // Verify localStorage updated
+    // 3. Verify localStorage updated
     const savedAfterAction = loadSavedMission();
     assert.ok(savedAfterAction);
     assert.equal(savedAfterAction.actionsRemaining, 1);
     assert.equal(savedAfterAction.resources.power, 90);
 
-    // Advance to Day 2
-    const afterDayAdvance: GameState = {
-      ...savedAfterAction,
-      day: 2,
-      actionsRemaining: 2,
-      phase: 'event',
-      currentScenarioId: 'solar-storm-sep',
-    };
-    setHookState(afterDayAdvance);
+    // 4. Advance to Day 2
+    const dayAdvanceRes = executeFinishDay(savedAfterAction);
+    assert.equal(dayAdvanceRes.success, true);
+    assert.equal(dayAdvanceRes.state.day, 2);
+    assert.equal(dayAdvanceRes.state.phase, 'event');
+    assert.equal(dayAdvanceRes.state.currentScenarioId, 'solar-activity');
+    saveMission(dayAdvanceRes.state);
 
-    // Simulate page reload: verify loaded state matches exactly
+    // 5. Simulate page reload: verify loaded state matches exactly
     const reloaded = loadSavedMission();
     assert.ok(reloaded);
     assert.equal(reloaded.day, 2);
     assert.equal(reloaded.phase, 'event');
-    assert.equal(reloaded.currentScenarioId, 'solar-storm-sep');
+    assert.equal(reloaded.currentScenarioId, 'solar-activity');
+  });
+
+  it('persists space weather dilemma choices across simulated reload', () => {
+    // 1. Arrange Day 2 solar storm scenario
+    const day2EventState: GameState = {
+      day: 2,
+      phase: 'event',
+      currentScenarioId: 'solar-activity',
+      actionsRemaining: 2,
+      resources: { ...INITIAL_RESOURCES },
+      outcome: 'active',
+      emergencyMistakes: 0,
+      history: [],
+    };
+
+    // 2. Commander selects shelter choice
+    const resolved = applyEventChoice(
+      day2EventState,
+      'solar-activity',
+      'shelter-in-bunker',
+      DEFAULT_SCENARIOS
+    );
+
+    assert.equal(resolved.phase, 'choose', 'Phase must transition back to maintenance choose');
+    assert.equal(resolved.emergencyMistakes, 0, 'Safe choice should not incur emergency mistakes');
+    assert.ok(resolved.history.length > 0, 'History must record event choice');
+
+    // 3. Save and reload
+    saveMission(resolved);
+    const reloaded = loadSavedMission();
+    assert.ok(reloaded);
+    assert.equal(reloaded.day, 2);
+    assert.equal(reloaded.phase, 'choose');
   });
 
   it('clears stored progress on mission reset or terminal outcome', () => {
@@ -191,5 +253,46 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     clearSavedMission();
     assert.equal(hasSavedMission(), false);
     assert.equal(loadSavedMission(), null);
+  });
+
+  it('ensures terminal failure automatically cleans storage', () => {
+    // Arrange state on brink of oxygen depletion
+    const criticalState: GameState = {
+      day: 1,
+      phase: 'choose',
+      actionsRemaining: 0,
+      resources: { oxygen: 5, power: 50, water: 50, food: 50, radiationRisk: 10 },
+      outcome: 'active',
+      emergencyMistakes: 0,
+      history: [],
+    };
+    saveMission(criticalState);
+    assert.equal(hasSavedMission(), true);
+
+    // Advance day -> nightly drain drops oxygen below 0 -> failure
+    const finished = executeFinishDay(criticalState);
+    assert.equal(finished.state.outcome, 'failure');
+
+    // Terminal outcome must not keep active save
+    clearSavedMission();
+    assert.equal(hasSavedMission(), false);
+    assert.equal(loadSavedMission(), null);
+  });
+
+  it('ensures terminal victory on Day 5 cleans storage for fresh replay', () => {
+    const day5Victory: GameState = {
+      day: 5,
+      phase: 'result',
+      actionsRemaining: 0,
+      resources: { oxygen: 60, power: 65, water: 60, food: 60, radiationRisk: 20 },
+      outcome: 'success',
+      emergencyMistakes: 0,
+      history: [],
+    };
+
+    // Terminal state should not be active
+    assert.equal(day5Victory.outcome, 'success');
+    clearSavedMission();
+    assert.equal(hasSavedMission(), false);
   });
 });

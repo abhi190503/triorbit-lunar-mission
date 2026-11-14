@@ -10,7 +10,7 @@
  * Reviewer: Abhinaya Jeyakumar (@abhi190503)
  */
 
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { ActionId, GameState } from '@/lib/game/types';
 import {
   createInitialMission,
@@ -73,6 +73,25 @@ export function useMission({
     return createInitialMission();
   });
 
+  // Keep a mutable ref to the freshest state to guarantee synchronous execution
+  // and prevent stale closures across batched updates without accessing refs during render
+  const stateRef = useRef<GameState>(gameState);
+  const isFirstMount = useRef(true);
+
+  // Synchronize state ref outside render body
+  useEffect(() => {
+    stateRef.current = gameState;
+  }, [gameState]);
+
+  // Adjust state if initialState prop changes externally
+  const [prevInitialState, setPrevInitialState] = useState(initialState);
+  if (initialState !== prevInitialState) {
+    setPrevInitialState(initialState);
+    if (initialState) {
+      setGameState(initialState);
+    }
+  }
+
   // Sync external storage state for cross-tab or external changes
   const rawSaveString = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
@@ -93,7 +112,12 @@ export function useMission({
   }, [rawSaveString]);
 
   // Auto-save whenever gameState changes and mission is active
+  // GUARANTEE: Never overwrite valid saved progress during initial mounting!
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     if (!autoSave) return;
     if (gameState.outcome === 'active') {
       saveMission(gameState);
@@ -111,57 +135,45 @@ export function useMission({
   }, [gameState, onMissionComplete]);
 
   // Execute maintenance action via canonical controller
+  // Guarantees synchronous return values, batched update safety, and no stale closures
   const handleExecuteAction = useCallback((actionId: ActionId): ActionResult => {
-    let result: ActionResult = {
-      success: false,
-      state: gameState,
-      reason: 'Action execution failed',
-    };
-
-    setGameState((prev) => {
-      const res = executeAction(prev, actionId);
-      result = res;
-      return res.success ? res.state : prev;
-    });
-
+    const current = stateRef.current;
+    const result = executeAction(current, actionId);
+    if (result.success) {
+      stateRef.current = result.state;
+      setGameState(result.state);
+    }
     return result;
-  }, [gameState]);
+  }, []);
 
   // Apply dilemma choice via canonical controller
   const handleApplyEventChoice = useCallback(
     (scenarioId: string, choiceId: string): GameState => {
-      let outcome = gameState;
-      setGameState((prev) => {
-        const next = applyEventChoice(prev, scenarioId, choiceId, DEFAULT_SCENARIOS);
-        outcome = next;
-        return next;
-      });
-      return outcome;
+      const current = stateRef.current;
+      const next = applyEventChoice(current, scenarioId, choiceId, DEFAULT_SCENARIOS);
+      stateRef.current = next;
+      setGameState(next);
+      return next;
     },
-    [gameState]
+    []
   );
 
   // Conclude mission day and apply nightly baseline drain
   const handleExecuteFinishDay = useCallback((): FinishDayResult => {
-    let result: FinishDayResult = {
-      success: false,
-      state: gameState,
-      reason: 'Finish day failed',
-    };
-
-    setGameState((prev) => {
-      const res = executeFinishDay(prev);
-      result = res;
-      return res.success ? res.state : prev;
-    });
-
+    const current = stateRef.current;
+    const result = executeFinishDay(current);
+    if (result.success) {
+      stateRef.current = result.state;
+      setGameState(result.state);
+    }
     return result;
-  }, [gameState]);
+  }, []);
 
   // Replay mission: clear save and reset to fresh Day 1 baseline
   const handleReplayMission = useCallback((): GameState => {
     clearSavedMission();
     const fresh = createInitialMission();
+    stateRef.current = fresh;
     setGameState(fresh);
     return fresh;
   }, []);
@@ -170,6 +182,7 @@ export function useMission({
   const handleResumeSavedMission = useCallback((): boolean => {
     const saved = loadSavedMission();
     if (saved && saved.outcome === 'active') {
+      stateRef.current = saved;
       setGameState(saved);
       return true;
     }
