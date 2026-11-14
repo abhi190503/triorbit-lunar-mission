@@ -8,6 +8,7 @@ import type {
   ResourceState,
   HistoryRecord,
 } from '@/lib/game/types';
+import { ReplayInsights } from './ReplayInsights';
 
 interface ResourceMeta {
   key: ResourceKey;
@@ -450,6 +451,19 @@ export function ResultsScreen({
           {takeaway.takeaway}
         </p>
       </section>
+
+      {/* TRI-031: Educational Replay Insights */}
+      <ReplayInsights
+        state={{
+          day,
+          phase: 'result',
+          actionsRemaining: 0,
+          resources,
+          outcome,
+          emergencyMistakes: 0,
+          history: history || [],
+        }}
+      />
 
       {/* History Debrief Summary (if supplied) */}
       {history && history.length > 0 && (
