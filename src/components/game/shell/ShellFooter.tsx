@@ -26,26 +26,26 @@ export function ShellFooter({
           <div className="flex items-center justify-center sm:justify-start gap-2 text-[#F4F7FC] font-semibold text-xs font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-[#60E5F4]" aria-hidden="true" />
             <span>TriOrbit Lunar Survival Simulator</span>
-            <span className="text-[#5A6E85]">•</span>
+            <span className="text-[#8FA2BA]">•</span>
             <span className="text-[#60E5F4]">NASA Space Apps Challenge 2026</span>
           </div>
           <p className="text-[11px] text-[#A8B8D0] max-w-xl">
             Educational simulator with authentic NASA DONKI space weather telemetry. Vitals are normalized 0–100 game points for classroom learning.
           </p>
           {showAiDisclosure && (
-            <p className="text-[10px] text-[#5A6E85]">
+            <p className="text-[10px] text-[#8FA2BA]">
               Concept illustrations prepared with AI assistance specifically for TriOrbit. Contains zero official NASA logos or agency seals.
             </p>
           )}
         </div>
 
         {/* Tech stack badge list */}
-        <div className="flex items-center gap-3 text-[11px] font-mono text-[#5A6E85] shrink-0">
-          <span className="hover:text-[#A8B8D0] transition-colors">Next.js 16</span>
+        <div className="flex items-center gap-3 text-[11px] font-mono text-[#8FA2BA] shrink-0">
+          <span className="hover:text-[#F4F7FC] transition-colors">Next.js 16</span>
           <span>•</span>
-          <span className="hover:text-[#A8B8D0] transition-colors">TypeScript</span>
+          <span className="hover:text-[#F4F7FC] transition-colors">TypeScript</span>
           <span>•</span>
-          <span className="hover:text-[#A8B8D0] transition-colors">Tailwind CSS</span>
+          <span className="hover:text-[#F4F7FC] transition-colors">Tailwind CSS</span>
         </div>
       </div>
     </footer>

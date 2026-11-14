@@ -97,6 +97,7 @@ export function ShellHeader({
               <GameBadge
                 variant={actionsRemaining > 0 ? 'amber' : 'muted'}
                 size="sm"
+                className="hidden sm:inline-flex max-[380px]:hidden"
               >
                 {actionsRemaining}/{maxActions}
               </GameBadge>
@@ -111,7 +112,7 @@ export function ShellHeader({
               type="button"
               onClick={onOpenScience}
               aria-label="Open NASA Science Drawer"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#162640] text-[#60E5F4] border border-[#1F3352] hover:border-[#60E5F4] hover:bg-[#203653] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[36px]"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#162640] text-[#60E5F4] border border-[#1F3352] hover:border-[#60E5F4] hover:bg-[#203653] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[44px] cursor-pointer"
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -136,7 +137,7 @@ export function ShellHeader({
               type="button"
               onClick={onToggleSound}
               aria-label={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-              className="p-2 rounded-lg text-[#A8B8D0] bg-[#162640] border border-[#1F3352] hover:text-[#F4F7FC] hover:border-[#60E5F4] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[36px] min-w-[36px] flex items-center justify-center"
+              className="p-2 rounded-lg text-[#A8B8D0] bg-[#162640] border border-[#1F3352] hover:text-[#F4F7FC] hover:border-[#60E5F4] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
             >
               {isMuted ? (
                 <svg
@@ -183,7 +184,7 @@ export function ShellHeader({
               type="button"
               onClick={onOpenHelp}
               aria-label="How to play mission guide"
-              className="p-2 rounded-lg text-[#A8B8D0] bg-[#162640] border border-[#1F3352] hover:text-[#60E5F4] hover:border-[#60E5F4] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[36px] min-w-[36px] flex items-center justify-center font-mono font-bold text-xs"
+              className="p-2 rounded-lg text-[#A8B8D0] bg-[#162640] border border-[#1F3352] hover:text-[#60E5F4] hover:border-[#60E5F4] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center font-mono font-bold text-xs cursor-pointer"
             >
               ?
             </button>

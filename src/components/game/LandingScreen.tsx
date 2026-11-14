@@ -240,9 +240,9 @@ export function LandingScreen({
               <span>Mission Parameters • 5-Day Surface Expedition</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-left">
               {/* Parameter 1: Days */}
-              <div className="p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-base" aria-hidden="true">🗓️</span>
                   <span className="text-[10px] font-mono text-[#60E5F4] uppercase">Loop</span>
@@ -256,7 +256,7 @@ export function LandingScreen({
               </div>
 
               {/* Parameter 2: Crew */}
-              <div className="p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-base" aria-hidden="true">👨‍🚀</span>
                   <span className="text-[10px] font-mono text-[#59DDA5] uppercase">Nominal</span>
@@ -270,7 +270,7 @@ export function LandingScreen({
               </div>
 
               {/* Parameter 3: Modules */}
-              <div className="p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-base" aria-hidden="true">🏛️</span>
                   <span className="text-[10px] font-mono text-[#FFCA72] uppercase">Facilities</span>
@@ -284,7 +284,7 @@ export function LandingScreen({
               </div>
 
               {/* Parameter 4: Actions */}
-              <div className="p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
+              <div className="p-2.5 sm:p-3 rounded-lg bg-[#080F20]/70 border border-[#1F3352] space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-base" aria-hidden="true">⚡</span>
                   <span className="text-[10px] font-mono text-[#60E5F4] uppercase">Budget</span>
@@ -333,7 +333,7 @@ export function LandingScreen({
           </div>
 
           {/* Educational Disclaimers & Provenance */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-[#5A6E85]">
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-[#8FA2BA]">
             <GameBadge variant="muted" size="sm">
               Educational Simulator (Ages 7–12)
             </GameBadge>

@@ -187,27 +187,21 @@ export function ModuleHotspot({
   costSummary,
   className = '',
 }: ModuleHotspotProps) {
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (!disabled) {
-        onSelect(id);
-      }
-    },
-    [disabled, onSelect, id]
-  );
+  // Determine horizontal alignment modifier to prevent tooltip clipping near container edges
+  const alignClass =
+    id === 'solar'
+      ? 'lunar-hotspot--align-left'
+      : id === 'greenhouse' || id === 'bunker'
+      ? 'lunar-hotspot--align-right'
+      : '';
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        if (!disabled) {
-          onSelect(id);
-        }
-      }
-    },
-    [disabled, onSelect, id]
-  );
+  // Native button semantics: Enter and Space trigger onClick natively.
+  // Relying on native button semantics prevents duplicate callbacks and keyboard interference.
+  const handleClick = useCallback(() => {
+    if (!disabled) {
+      onSelect(id);
+    }
+  }, [disabled, onSelect, id]);
 
   return (
     <button
@@ -219,16 +213,15 @@ export function ModuleHotspot({
       aria-pressed={isSelected}
       disabled={disabled}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
       style={{
         left: `${left}%`,
         top: `${top}%`,
         width: `${width}%`,
         height: `${height}%`,
       }}
-      className={`lunar-hotspot ${isSelected ? 'lunar-hotspot--selected' : ''} ${
-        disabled ? 'lunar-hotspot--disabled' : ''
-      } ${className}`.trim()}
+      className={`lunar-hotspot ${alignClass} ${
+        isSelected ? 'lunar-hotspot--selected' : ''
+      } ${disabled ? 'lunar-hotspot--disabled' : ''} ${className}`.trim()}
     >
       {/* Floating telemetry peek tooltip on hover or keyboard focus */}
       <div className="lunar-hotspot-telemetry" aria-hidden="true">
