@@ -1,6 +1,7 @@
 # TriOrbit — Lunar Survival Simulator
 
 > **NASA Space Apps Challenge 2026** — *Junior Astronaut Mission Trainer (Ages 7–12)*
+> **Live Web Application:** [https://triorbit-lunar-mission.vercel.app](https://triorbit-lunar-mission.vercel.app)
 > **Repository:** [abhi190503/triorbit-lunar-mission](https://github.com/abhi190503/triorbit-lunar-mission)
 > **Challenge Track:** Junior Astronaut Mission Trainer
 > **Target Audience:** Future astronauts aged 7–12, educators, and science enthusiasts.
@@ -232,9 +233,10 @@ TriOrbit's simulation engine and user interface were verified through a comprehe
 
 ## 13. 🎨 Project Presentation & Demonstration
 
+- **Live Deployed Web Application:** [https://triorbit-lunar-mission.vercel.app](https://triorbit-lunar-mission.vercel.app)
 - **Demonstration Format:** Agreed Six-Slide Online Presentation (Maximum 7 slides counting title).
 - **Storyboard & Script:** Complete slide-by-slide script, layout descriptions, and presenter notes are recorded in [submission/DEMO_SCRIPT.md](submission/DEMO_SCRIPT.md).
-- **Online Demo Link:** Recorded in [submission/DEMO_LINK.txt](submission/DEMO_LINK.txt) (*Pending team owner publication of the verified 6-slide deck to public view-only Google Slides*).
+- **Online Demo Deck Link:** Recorded in [submission/DEMO_LINK.txt](submission/DEMO_LINK.txt) (*Pending team owner publication of the verified 6-slide deck to public view-only Google Slides*).
 
 ---
 
