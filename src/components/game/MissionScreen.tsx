@@ -220,7 +220,7 @@ export function MissionScreen({
                 role="status"
                 aria-live="polite"
                 className={`
-                  w-full px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium border flex items-center justify-between gap-3 transition-all
+                  w-full px-4 py-2.5 rounded-lg text-xs sm:text-sm font-medium border flex items-center justify-between gap-3 transition-all duration-200 motion-reduce:transition-none
                   ${
                     feedback.type === 'error'
                       ? 'bg-[#FF6B73]/15 text-[#FF888E] border-[#FF6B73]/40'

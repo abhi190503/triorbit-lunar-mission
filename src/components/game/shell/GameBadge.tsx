@@ -83,7 +83,7 @@ export function GameBadge({
       {pulse && (
         <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
           <span
-            className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${styles.dot}`}
+            className={`animate-ping motion-reduce:hidden absolute inline-flex h-full w-full rounded-full opacity-75 ${styles.dot}`}
           />
           <span className={`relative inline-flex rounded-full h-2 w-2 ${styles.dot}`} />
         </span>

@@ -118,7 +118,7 @@ export function GameModal({
     >
       {/* Backdrop Scrim */}
       <div
-        className="fixed inset-0 bg-[#040812]/85 backdrop-blur-sm transition-opacity duration-200"
+        className="fixed inset-0 bg-[#040812]/85 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none"
         aria-hidden="true"
         onClick={closeOnBackdropClick ? onClose : undefined}
       />
@@ -132,7 +132,7 @@ export function GameModal({
           max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)]
           bg-[#101D35] border border-[#38BDF8]/40 rounded-2xl
           shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8),0_0_24px_rgba(96,229,244,0.18)]
-          overflow-hidden focus:outline-none animate-in fade-in zoom-in-95 duration-200
+          overflow-hidden focus:outline-none animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none motion-reduce:transform-none
         `}
       >
         {/* Header (pinned to top) */}

@@ -355,7 +355,7 @@ export function ResourceGauge({
       data-resource={resourceKey}
       data-status={statusInfo.status}
       className={`
-        rounded-lg border transition-all duration-200
+        rounded-lg border transition-all duration-200 motion-reduce:transition-none
         ${statusInfo.isCritical
           ? 'bg-[#162640]/90 border-[#FF6B73]/60 shadow-[0_0_12px_rgba(255,107,115,0.25)]'
           : statusInfo.status === 'warning'
@@ -445,8 +445,8 @@ export function ResourceGauge({
               backgroundColor: statusInfo.barColorHex,
             }}
             className={`
-              h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none
-              ${statusInfo.isCritical ? 'animate-pulse' : ''}
+              h-full rounded-full transition-[width,background-color] duration-300 ease-out motion-reduce:transition-none
+              ${statusInfo.isCritical ? 'animate-pulse motion-reduce:animate-none' : ''}
             `}
           />
         </div>

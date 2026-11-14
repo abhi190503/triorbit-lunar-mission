@@ -237,7 +237,7 @@ export function LunarBaseScene({
           aria-hidden="true"
         >
           <span className="font-mono flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-electric animate-pulse inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-electric animate-pulse motion-reduce:animate-none inline-block" />
             OUTPOST TELEMETRY NOMINAL
           </span>
           <span className="hidden sm:inline text-[10px] text-text-muted">
