@@ -1,0 +1,50 @@
+{
+  "revision": "parallel-start-2026-11-13",
+  "source": "prior TriOrbit 31-task pack; rebalanced, no implementation",
+  "number_of_tasks": 31,
+  "owners": {
+    "Abhinaya Jeyakumar": 12,
+    "Nirsanth A.": 10,
+    "Vibhushan Ganeshan": 9
+  },
+  "saturday_focused_hours": {
+    "Abhinaya Jeyakumar": 6.8,
+    "Vibhushan Ganeshan": 7.5,
+    "Nirsanth A.": 7.9
+  },
+  "unchanged_task_ids": [
+    "TRI-001",
+    "TRI-002",
+    "TRI-003",
+    "TRI-004",
+    "TRI-005",
+    "TRI-006",
+    "TRI-007",
+    "TRI-008",
+    "TRI-009",
+    "TRI-010",
+    "TRI-011",
+    "TRI-012",
+    "TRI-013",
+    "TRI-014",
+    "TRI-015",
+    "TRI-016",
+    "TRI-017",
+    "TRI-018",
+    "TRI-019",
+    "TRI-020",
+    "TRI-021",
+    "TRI-022",
+    "TRI-023",
+    "TRI-024",
+    "TRI-025",
+    "TRI-026",
+    "TRI-027",
+    "TRI-028",
+    "TRI-029",
+    "TRI-030",
+    "TRI-031"
+  ],
+  "max_parallel_teams": 3,
+  "critical_constraint": "no code before 2026-11-14 09:00 Asia/Colombo"
+}
