@@ -52,10 +52,10 @@ flowchart TD
 
 ### Category 3: Fictional Mission Events (Narrative Scenarios)
 - **Nature:** Synthetic narrative situations designed to present players with tactical mission choices.
-- **Examples:**
-  - Day 2: Hydroponics water valve blockage.
-  - Day 3: Historical Solar Energetic Particle alert received by simulated Mission Control.
-  - Day 4: Solar array dust accumulation reducing charging efficiency.
+- **Examples (Canonical 5-Day Schedule):**
+  - Day 2: Solar Energetic Particle alert (`solar-activity`) based on authentic NASA spacecraft telemetry.
+  - Day 3: Habitat Electrical Grid Fluctuation (`power-outage`) simulating substation circuit breaker trip.
+  - Day 4: Hydroponic Irrigation Line Emergency (`greenhouse-water`) simulating manifold pressure drop.
 - **Rule:** Fictional habitat events must be clearly presented as training simulations, even when triggered by a real historical NASA bulletin.
 
 ### Category 4: Educational Explanations (Science Communication)
@@ -196,7 +196,7 @@ This document and `docs/SCIENCE_SOURCES.md` serve as the scientific contract for
    - Query `GET /DONKI/SEP` with date parameters or gracefully serve `verified-fallback` with `2024-05-11T04:07:00-SEP-001`.
    - Ensure the server-side API key is loaded from private `NASA_API_KEY`, defaulting to `DEMO_KEY` when omitted.
 2. **TRI-011 (Curated Scenario Content — Nirsanth):**
-   - Author Day 3 space weather dilemma referencing `2024-05-11T04:07:00-SEP-001`.
+   - Author Day 2 space weather dilemma referencing `2024-05-11T04:07:00-SEP-001`.
    - Include educational text using the approved language patterns defined in §4.
 3. **TRI-018 (Science & Educational Drawer — Nirsanth):**
    - Render the standard citation format defined in `docs/SCIENCE_SOURCES.md` §10.
@@ -204,3 +204,19 @@ This document and `docs/SCIENCE_SOURCES.md` serve as the scientific contract for
 4. **TRI-021 (QA & Scientific Evidence Audit — Nirsanth & Vibhushan):**
    - Verify that no synthetic event records have been committed under `NASA DONKI` attribution.
    - Audit downstream components to ensure no claim of biological radiation dosimetry is presented.
+
+---
+
+## 8. Post-Integration Science & Assumptions Reconciliation (TRI-025)
+
+**Reconciliation Date:** 14 November 2026
+**Auditor:** Nirsanth A. (`@nirsanth23`)
+**Integration Baseline SHA:** `5ee917a7d0f6138ad739be9af998abbc0c258835` (`develop`)
+
+### 8.1 Reconciliation of Documentation and Canonical Game Contracts
+An exhaustive audit across `docs/ASSUMPTIONS.md`, `docs/GAME_RULES.md`, `docs/INTERFACES.md`, and the integrated code confirmed:
+1. **Normalized Units:** All 5 vitals are strictly bounded integers in $[0, 100]$ representing educational game points. No physical units (liters, kilograms, kilowatt-hours, grays, or sieverts) are calculated or claimed in the simulation engine.
+2. **Radiation Risk Dynamics:** Verified that `DAILY_DRAIN.radiationRisk === 0`. Radiation hazard changes exclusively through active player decisions (e.g. bunker shielding) or space weather events.
+3. **Scenario Timing:** Reconciled illustrative early planning drafts to align with the frozen implementation schedule: Day 2 (`solar-activity`), Day 3 (`power-outage`), and Day 4 (`greenhouse-water`).
+4. **External Documentation Defect Logged:** Identified in `README.md` (Line 14) that physical unit abbreviations ($kW$, $L$, $kg$) were placed next to resource names. Logged for README owner (`@abhi190503`) to update in the final documentation polishing pass.
+5. **Post-Integration Verification:** Verified through 124 passing end-to-end integration assertions that all assumptions operate deterministically in the running application.
