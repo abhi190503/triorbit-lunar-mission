@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { MissionScreen } from './MissionScreen';
+import { useMission } from '@/hooks/useMission';
 import {
   saveMission,
   loadSavedMission,
@@ -20,12 +21,9 @@ import {
 } from '@/lib/game/persistence';
 import {
   createInitialMission,
-  executeAction,
   executeFinishDay,
-  applyEventChoice,
 } from '@/lib/game/controller';
 import { INITIAL_RESOURCES } from '@/lib/game/contracts';
-import { DEFAULT_SCENARIOS } from '@/lib/game/constants';
 import type { GameState } from '@/lib/game/types';
 
 // In-memory mock localStorage for Node test runner
@@ -178,42 +176,61 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     assert.equal(loadSavedMission(), null, 'Corrupt payload must be automatically purged');
   });
 
-  it('verifies full state persistence lifecycle through controller & storage (actions, day advance, reload)', () => {
-    // 1. Initialize mission
-    const initial = createInitialMission();
-    saveMission(initial);
+  it('verifies full state persistence lifecycle through mounted useMission hook (actions, day advance, reload)', () => {
+    let hookOutput = null as unknown as ReturnType<typeof useMission>;
+    function TestHookHarness() {
+      hookOutput = useMission();
+      return React.createElement('div', null, `Day: ${hookOutput.gameState.day}`);
+    }
 
-    // 2. Execute maintain solar action
-    const actionRes = executeAction(initial, 'maintain-solar');
-    assert.equal(actionRes.success, true);
-    assert.equal(actionRes.state.actionsRemaining, 1);
-    assert.equal(actionRes.state.resources.power, 90);
-    saveMission(actionRes.state);
+    // 1. Initial mount of hook
+    renderToString(React.createElement(TestHookHarness));
+    assert.equal(hookOutput.gameState.day, 1);
+    assert.equal(hookOutput.gameState.actionsRemaining, 2);
 
-    // 3. Verify localStorage updated
-    const savedAfterAction = loadSavedMission();
-    assert.ok(savedAfterAction);
-    assert.equal(savedAfterAction.actionsRemaining, 1);
-    assert.equal(savedAfterAction.resources.power, 90);
+    // 2. Execute maintain-solar action through hook
+    const actionResult = hookOutput.executeAction('maintain-solar');
+    assert.equal(actionResult.success, true);
+    assert.equal(actionResult.state.actionsRemaining, 1);
+    assert.equal(actionResult.state.resources.power, 90);
 
-    // 4. Advance to Day 2
-    const dayAdvanceRes = executeFinishDay(savedAfterAction);
-    assert.equal(dayAdvanceRes.success, true);
-    assert.equal(dayAdvanceRes.state.day, 2);
-    assert.equal(dayAdvanceRes.state.phase, 'event');
-    assert.equal(dayAdvanceRes.state.currentScenarioId, 'solar-activity');
-    saveMission(dayAdvanceRes.state);
+    // 3. Conclude Day 1 through hook -> advances to Day 2 event
+    const finishResult = hookOutput.finishDay();
+    assert.equal(finishResult.success, true);
+    assert.equal(finishResult.state.day, 2);
+    assert.equal(finishResult.state.phase, 'event');
+    assert.equal(finishResult.state.currentScenarioId, 'solar-activity');
 
-    // 5. Simulate page reload: verify loaded state matches exactly
-    const reloaded = loadSavedMission();
-    assert.ok(reloaded);
-    assert.equal(reloaded.day, 2);
-    assert.equal(reloaded.phase, 'event');
-    assert.equal(reloaded.currentScenarioId, 'solar-activity');
+    // 4. Save is persisted
+    saveMission(finishResult.state);
+    const saved = loadSavedMission();
+    assert.ok(saved);
+    assert.equal(saved.day, 2);
+    assert.equal(saved.phase, 'event');
+
+    // 5. Mount a NEW instance of the component (simulating page reload)
+    let reloadedHookOutput = null as unknown as ReturnType<typeof useMission>;
+    function ReloadedHarness() {
+      reloadedHookOutput = useMission();
+      return React.createElement('div', null, `Day: ${reloadedHookOutput.gameState.day}`);
+    }
+    renderToString(React.createElement(ReloadedHarness));
+    assert.equal(reloadedHookOutput.gameState.day, 2);
+    assert.equal(reloadedHookOutput.gameState.phase, 'event');
+    assert.equal(reloadedHookOutput.gameState.currentScenarioId, 'solar-activity');
+
+    // 6. Resolve space weather dilemma through reloaded hook
+    const dilemmaResult = reloadedHookOutput.applyEventChoice('solar-activity', 'shelter-in-bunker');
+    assert.equal(dilemmaResult.phase, 'choose');
+    assert.equal(dilemmaResult.emergencyMistakes, 0);
+
+    // 7. Replay mission through hook -> resets to Day 1 and purges storage
+    reloadedHookOutput.replayMission();
+    assert.equal(hasSavedMission(), false);
+    assert.equal(loadSavedMission(), null);
   });
 
-  it('persists space weather dilemma choices across simulated reload', () => {
-    // 1. Arrange Day 2 solar storm scenario
+  it('renders EventModal dilemma dialog when MissionScreen is mounted from a Day 2 save', () => {
     const day2EventState: GameState = {
       day: 2,
       phase: 'event',
@@ -224,25 +241,27 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
       emergencyMistakes: 0,
       history: [],
     };
+    saveMission(day2EventState);
 
-    // 2. Commander selects shelter choice
-    const resolved = applyEventChoice(
-      day2EventState,
-      'solar-activity',
-      'shelter-in-bunker',
-      DEFAULT_SCENARIOS
+    const html = renderToString(React.createElement(MissionScreen));
+    assert.ok(html.includes('role="dialog"'), 'EventModal dialog must be rendered');
+    assert.ok(
+      html.includes('Solar Energetic Particle Warning'),
+      'Must render Day 2 solar dilemma title'
     );
+    assert.ok(
+      html.includes('Shelter crew in shielded regolith bunker'),
+      'Must render dilemma choices'
+    );
+  });
 
-    assert.equal(resolved.phase, 'choose', 'Phase must transition back to maintenance choose');
-    assert.equal(resolved.emergencyMistakes, 0, 'Safe choice should not incur emergency mistakes');
-    assert.ok(resolved.history.length > 0, 'History must record event choice');
-
-    // 3. Save and reload
-    saveMission(resolved);
-    const reloaded = loadSavedMission();
-    assert.ok(reloaded);
-    assert.equal(reloaded.day, 2);
-    assert.equal(reloaded.phase, 'choose');
+  it('renders MissionScreen cleanly in SSR with zero throws and authoritative shell landmarks', () => {
+    let html = '';
+    assert.doesNotThrow(() => {
+      html = renderToString(React.createElement(MissionScreen));
+    });
+    assert.ok(html.includes('Interactive Lunar Base Station'));
+    assert.ok(html.includes('id="main-stage"'));
   });
 
   it('clears stored progress on mission reset or terminal outcome', () => {

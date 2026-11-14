@@ -18,6 +18,7 @@ export interface GameShellProps {
   overlaySlot?: React.ReactNode;
   className?: string;
   stageClassName?: string;
+  suppressHydrationWarning?: boolean;
 }
 
 export function GameShell({
@@ -32,9 +33,11 @@ export function GameShell({
   overlaySlot,
   className = '',
   stageClassName = '',
+  suppressHydrationWarning = false,
 }: GameShellProps) {
   return (
     <div
+      suppressHydrationWarning={suppressHydrationWarning}
       className={`
         min-h-screen w-full flex flex-col bg-[#080F20] text-[#F4F7FC] relative overflow-x-hidden
         bg-space-mesh

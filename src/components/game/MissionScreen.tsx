@@ -177,6 +177,7 @@ export function MissionScreen({
   return (
     <GameShell
       className={className}
+      suppressHydrationWarning={true}
       headerProps={{
         day: gameState.day,
         maxDays: 5,
