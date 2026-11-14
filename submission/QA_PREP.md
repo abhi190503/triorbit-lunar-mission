@@ -16,7 +16,7 @@
 ## 1. Executive Summary & Review Scope
 
 This document provides Team TriOrbit with a comprehensive defense manual for the virtual 5-minute presentation and live judging session. It encompasses:
-1. **Twenty Canonical Judges' Questions & Answers** calibrated for international NASA Space Apps judges.
+1. **Twenty Canonical Judges' Questions & Answers** calibrated for international NASA Space Apps judges, with transparent scientific and technical boundaries.
 2. **Demonstration Failure Recovery Plan** for live connectivity, software, and pacing emergencies.
 3. **Rigorous Rehearsal Verification Protocol** distinguishing automated code validation from required human team practice.
 4. **Known Technical & Scientific Limitations Register** ensuring complete transparency.
@@ -61,7 +61,7 @@ Each response is engineered to be concise (45–75 words), accurate to the codeb
 ### Question 5: Is your NASA data real or simulated?
 **Category:** *Scientific Honesty & Data Grounding*
 **Answer:**
-> "The observation itself is 100% authentic NASA data from the Space Weather Database of Notifications, Knowledge, and Information (DONKI)—specifically, a Solar Energetic Particle event observed by NASA's STEREO A spacecraft on May 11, 2024. However, the in-game resource consequences are educational simulation models. We maintain complete scientific honesty by separating authentic spacecraft metadata from educational game values across our UI and documentation."
+> "We maintain strict scientific honesty through explicit attribution. The Day 2 space weather alert is powered by authentic NASA DONKI observation data from the STEREO A spacecraft during the May 11, 2024 Solar Energetic Particle event. In contrast, Day 3 and Day 4 present fictional educational emergencies—an electrical grid fluctuation and a hydroponics leak. Resource impacts are calibrated simulation points, not measured surface dosimetry."
 
 ---
 
@@ -103,35 +103,35 @@ Each response is engineered to be concise (45–75 words), accurate to the codeb
 ### Question 11: Why doesn't the application require a database?
 **Category:** *Architecture & Privacy Compliance*
 **Answer:**
-> "Classroom privacy and frictionless accessibility were paramount. Requiring user accounts or a remote database introduces student privacy compliance hurdles under COPPA and FERPA, while adding network failure points. By managing game state in browser memory and caching NASA data in a Next.js server route, TriOrbit loads instantly on any school Chromebook, stores zero student data, and resets cleanly with one click."
+> "Classroom privacy and frictionless accessibility were paramount. Requiring user accounts or a remote database introduces student privacy compliance hurdles under COPPA and FERPA, while adding network failure points. By managing game state in browser memory and caching NASA data in a Next.js server route, TriOrbit loads instantly on school Chromebooks, stores zero student data, and resets cleanly with one click."
 
 ---
 
 ### Question 12: How does the application behave if the internet disconnects?
 **Category:** *Reliability & Fault Tolerance*
 **Answer:**
-> "TriOrbit is completely fault-tolerant. Our Next.js backend proxy caches verified historical NASA DONKI records in a bundled JSON fixture. If the internet disconnects or NASA's public API is rate-limited, the application automatically falls back to this verified offline dataset. The UI continues running smoothly, displaying an informative offline badge without crashing or interrupting the student's mission."
+> "Our Next.js API route includes a verified historical fallback fixture (`verified-events.json`). If NASA's public API is unreachable or rate-limited, the backend serves this cached record with an explicit offline provenance tag. Once loaded in the browser, active gameplay executes purely in client memory without network calls. However, because TriOrbit is not a full Progressive Web App, initial page delivery requires network or local server access."
 
 ---
 
 ### Question 13: Can the game work on mobile devices?
 **Category:** *Responsive UI & Cross-Platform Support*
 **Answer:**
-> "Yes. We engineered a responsive layout with mobile-first touch targets. On desktop screens, players interact directly with the 2.5D lunar base hotspots. On mobile screens, the interface adapts to a dedicated facility navigation bar with touch targets meeting or exceeding 48 pixels. The telemetry HUD stacks cleanly, ensuring intuitive touch navigation on smartphones and classroom tablets."
+> "Yes. We built a responsive layout using Tailwind CSS. On desktop screens, players interact directly with the 2.5D lunar base hotspots. On smaller viewports, the interface adapts to a mobile facility navigation bar with touch targets meeting standard 44 to 48 pixel guidelines. While tested across common viewport sizes, full physical validation across diverse mobile hardware remains an ongoing enhancement."
 
 ---
 
 ### Question 14: How did you test its accessibility?
 **Category:** *Accessibility & WCAG Compliance*
 **Answer:**
-> "We followed WAI-ARIA standards throughout development. All dialog modals include focus trapping and `aria-modal` semantics, resource gauges use `role='progressbar'` with descriptive labels, color tokens meet WCAG AA contrast standards, and touch targets exceed 44 pixels. The entire application can be navigated using only a keyboard with Tab, Space, and Enter, verified in our automated accessibility test suites."
+> "We implemented baseline WAI-ARIA standards throughout development. Dialog modals feature `role='dialog'` and `aria-modal='true'`, resource gauges use `role='progressbar'`, color tokens are designed for high contrast, and keyboard navigation was validated in automated integration tests. However, we do not claim full formal accessibility certification, as comprehensive testing with diverse screen readers remains on our future roadmap."
 
 ---
 
 ### Question 15: Which technologies did you use to build TriOrbit?
 **Category:** *Technology Stack*
 **Answer:**
-> "We built TriOrbit using Next.js 16 App Router with React 19 and TypeScript, styled with Tailwind CSS. The simulation engine is pure TypeScript with zero external game dependencies. Visual assets are hand-coded inline vector SVG. Testing was conducted using the native Node.js test runner across 25 test suites with 124 passing assertions, verified by automated TypeScript type-checking and ESLint."
+> "We built TriOrbit using Next.js 16 App Router with React 19 and TypeScript, styled with Tailwind CSS. The simulation engine is pure TypeScript with zero external game dependencies. Visual assets are hand-coded inline vector SVG. Verification was performed across 31 automated test suites with 124 passing assertions, validated by automated TypeScript type-checking and ESLint."
 
 ---
 
@@ -180,8 +180,8 @@ Live technology demonstrations carry inherent risks. Follow these contingency pr
 │  (NASA DONKI Unreached) │     │ (verified-events.json)  │     │ resilience demonstrated"│
 └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
 ┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
-│  Anomaly 2: Server Down │ ──> │ Switch to 6-Slide Deck  │ ──> │ State: "Presenting from │
-│  (Localhost Unreachable)│     │ (submission/DEMO_SCRIPT)│     │ verified application"   │
+│  Anomaly 2: Server Down │ ──> │ Switch to Storyboard    │ ──> │ State: "Presenting from │
+│  (Localhost Unreachable)│     │ (submission/DEMO_SCRIPT)│     │ repository walkthrough" │
 └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
 ┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
 │  Anomaly 3: Screen Lag  │ ──> │ Co-Presenter Shares     │ ──> │ Primary Presenter Keeps │
@@ -192,19 +192,19 @@ Live technology demonstrations carry inherent risks. Follow these contingency pr
 | Failure Scenario | Immediate Action | Presenter Voiceover Script | Technical Root Cause |
 |---|---|---|---|
 | **1. NASA API Unavailable or Rate-Limited** | None needed. Application automatically loads bundled `verified-events.json` fixture. | *"Notice our HUD displays our offline resilience badge. TriOrbit automatically falls back to verified NASA archive data to ensure uninterrupted classroom play."* | Upstream HTTP 404/429 handled by `/api/nasa/events` route handler. |
-| **2. Internet Disconnects During Pitch** | Continue playing normally. Application runs entirely client-side. | *"Because TriOrbit executes its simulation entirely in browser memory, our lunar base continues running even during total internet loss."* | Pure client state reducer does not make outbound network calls during turns. |
-| **3. Local Dev Server Fails to Start** | Switch immediately to the verified Six-Slide Presentation Deck (`submission/DEMO_SCRIPT.md`). | *"Judges, while our local development container reboots, let's step through our verified application walkthrough deck showing our integrated production build."* | Production build assets and screenshots pre-verified in TRI-026. |
-| **4. Browser Tab Freezes or Crashes** | Press `Ctrl+Shift+T` or open a new tab at `http://localhost:3000/play`. | *"Resetting our telemetry terminal now—our deterministic engine initializes a fresh expedition in under 200 milliseconds."* | Instant initialization via `createInitialMission()`. |
+| **2. Upstream Network Disconnects** | Continue playing active session. In-memory state continues without per-turn network calls. | *"Because TriOrbit executes active mission turns in browser memory, our expedition continues without per-turn network dependencies."* | Pure client state reducer does not make outbound network calls during turns. Note: initial page load still requires local server. |
+| **3. Local Dev Server Fails to Start** | Switch to the repository demo storyboard (`submission/DEMO_SCRIPT.md`). | *"Judges, while our local development container reboots, let's step through our verified application walkthrough storyboard showing our integrated production build."* | Production build assets and walkthrough pre-verified in TRI-026. Public slide deck link remains PENDING. |
+| **4. Browser Tab Freezes or Crashes** | Press `Ctrl+Shift+T` or open a new tab at `http://localhost:3000/play`. | *"Resetting our telemetry terminal now—our deterministic engine initializes a fresh expedition instantaneously in client memory."* | Instantaneous client initialization via `createInitialMission()`. |
 | **5. Screen Sharing Freezes on Video Call** | Co-presenter (Vibhushan or Nirsanth) takes over screen share; primary speaker continues speaking. | *"Handing screen broadcast over to Vibhushan while we continue inspecting our life support telemetry."* | Standby shared repository clone ready on secondary machine. |
 | **6. Accidental Button Click Triggers Game Over** | Turn it into an educational demonstration of the results screen! | *"And notice what happens when a commander takes a critical risk: our debrief screen explains the exact life support system that failed, turning mistakes into learning moments."* | `ResultsScreen.tsx` cleanly renders educational diagnostic debrief. |
-| **7. Pitch Running Over Time (4:00 reached at Day 1)** | Skip optional module maintenance; immediately click "Finish Day" to trigger the Day 2 NASA event, then jump to conclusion. | *"To respect our five-minute limit, let's fast-forward directly to our authentic NASA space weather event on Day 2."* | Preserves core evaluation criteria within strictly enforced time limit. |
+| **7. Pitch Running Over Time (4:00 reached at Day 1)** | Skip optional module maintenance; conclude Day 1 to trigger the Day 2 NASA event, then transition to 5-day debrief. | *"To respect our five-minute limit, let's proceed directly to our authentic NASA space weather event on Day 2, and review the full mission debrief."* | Preserves core evaluation criteria within strictly enforced time limit. |
 
 ---
 
 ## 4. Rehearsal Verification & Quality Assurance Checklist
 
 > [!CAUTION]
-> The automated test suite has passed 124 of 124 assertions in integration testing. However, a successful live presentation requires timed human rehearsal. Items requiring physical execution are explicitly classified.
+> The automated test suite has passed 124 of 124 assertions across 31 test suites in integration testing. However, a successful live presentation requires timed human rehearsal. Items requiring physical execution are explicitly classified.
 
 ### Human Rehearsal Checklist
 
@@ -212,13 +212,13 @@ Live technology demonstrations carry inherent risks. Follow these contingency pr
 |---|---|---|:---:|---|
 | **1. Integrated Application Build** | Clean build with static routes (`/`, `/play`) and API route (`/api/nasa/events`) | `npm run build` | **VERIFIED** | Passed in TRI-021 / TRI-026 audits |
 | **2. TypeScript & Lint Integrity** | 0 TypeScript errors, 0 ESLint warnings | `npx tsc --noEmit && npm run lint` | **VERIFIED** | 0 errors, 0 warnings across all files |
-| **3. Automated Test Suite** | 100% deterministic pass across all game contracts | Native test runner | **VERIFIED** | 124 passing assertions (TRI-021) |
-| **4. Timed Human Speaking Rehearsal** | Spoken delivery completes in under 4 minutes 45 seconds | Physical stopwatch dry run | **NOT VERIFIED** | **Action for Abhinaya:** Complete 1 live dry run with timer |
+| **3. Automated Test Suite** | 100% deterministic pass across all game contracts | Native test runner | **VERIFIED** | 124 passing assertions across 31 test suites (TRI-021) |
+| **4. Timed Human Speaking Rehearsal** | Spoken delivery completes in under 4 minutes | Physical stopwatch dry run | **NOT VERIFIED** | **Action for Abhinaya:** Complete 1 live dry run with timer |
 | **5. Screen-by-Screen Click Practice** | All clicks executed in sync with spoken voiceover | Browser rehearsal on localhost | **NOT VERIFIED** | **Action for Abhinaya:** Practice clicks listed in `PITCH_SCRIPT.md` |
 | **6. Handover Verbal Cues (if panel)** | Seamless 2-second handovers between Abhinaya, Nirsanth, Vibhushan | Team dry run on voice call | **NOT VERIFIED** | **Action for Team:** Rehearse Section 4 handovers if presenting as trio |
 | **7. NASA API Fallback Injection Test** | Disconnect Wi-Fi and verify Day 2 event loads with offline provenance | Manual network disconnect test | **NOT VERIFIED** | **Action for Nirsanth:** Test `verified-events.json` fallback locally |
-| **8. Meeting Link & Presentation Slot** | Zoom / Webex slot confirmed with Space Apps Local Lead | Local event communication | **NOT VERIFIED** | **Action for Abhinaya:** Check local event schedule and meeting link |
-| **9. Backup Presentation Slides Loaded** | 6-slide deck tab open and ready as contingency | Browser tab prepared | **NOT VERIFIED** | **Action for Team:** Have `submission/DEMO_SCRIPT.md` open |
+| **8. Meeting Link & Presentation Slot** | Meeting slot / platform link confirmed with Space Apps Local Lead | Local event communication | **NOT VERIFIED** | **Action for Abhinaya:** Check local event schedule and meeting link |
+| **9. Backup Presentation Slides Loaded** | Storyboard tab open and ready as contingency | Browser tab prepared | **NOT VERIFIED** | **Action for Team:** Have `submission/DEMO_SCRIPT.md` open; public slide URL is **PENDING** |
 
 ---
 
@@ -229,14 +229,21 @@ To uphold academic integrity and prevent false claims during judging:
 1. **Space Weather vs. Surface Dosimetry:**
    - STEREO A detects protons in interplanetary orbit; it does **not** measure absorbed radiation dose on the lunar surface.
    - The game's `radiationRisk` scale is an educational simulation point system ($0–100$), not a biological measurement in Grays or Sieverts.
-2. **Simplified Life Support Physics:**
+2. **Authentic vs. Fictional Events:**
+   - Day 2 is an authentic NASA DONKI observation (`2024-05-11T04:07:00-SEP-001`).
+   - Day 3 (Electrical Grid Fluctuation) and Day 4 (Hydroponic Irrigation Leak) are fictional educational engineering dilemmas designed to teach resource trade-offs.
+3. **Simplified Life Support Physics:**
    - Habitat resource consumption rates ($-16\ O_2$, $-14\ \text{Power}$, etc.) are calibrated for game balance across 5 days, not calculated from NASA-STD-3001 metabolic charts.
-3. **Single Dilemma Schedule:**
-   - Days 2, 3, and 4 each present exactly one scheduled emergency dilemma; Days 1 and 5 feature pure base maintenance.
-4. **Single-Player Focus:**
+4. **Five-Day Single Dilemma Schedule:**
+   - Days 2, 3, and 4 each present exactly one scheduled emergency dilemma; Days 1 and 5 feature pure base maintenance. Winning requires completing all five days.
+5. **Single-Player Focus:**
    - The current release focuses on a single Commander role; collaborative multi-role networking is reserved for future work.
-5. **Pending Public Slide Deck URL:**
+6. **Pending Public Slide Deck URL:**
    - The public Google Slides link in `submission/DEMO_LINK.txt` remains marked `PENDING` awaiting team publication; the presentation script strictly utilizes the verified repository codebase.
+7. **Accessibility & Device Validation:**
+   - Baseline WAI-ARIA markup and keyboard controls were verified in component tests; comprehensive screen-reader user testing and universal mobile hardware testing remain future roadmap items.
+8. **Offline Resilience Scope:**
+   - Offline resilience covers backend API route fallback to bundled records and client in-memory execution during an active session; it is not a full ServiceWorker-powered Progressive Web App.
 
 ---
 
@@ -244,9 +251,12 @@ To uphold academic integrity and prevent false claims during judging:
 
 *For completion by Independent Reviewer Vibhushan Ganeshan (`@Vibhushan-2003`):*
 
-- [ ] Verified that `submission/PITCH_SCRIPT.md` adheres to the 5-minute presentation budget.
+- [ ] Verified that `submission/PITCH_SCRIPT.md` adheres to the 450–500 word spoken budget and 5-minute limit.
 - [ ] Confirmed that all 20 canonical questions in `submission/QA_PREP.md` reflect actual repository code and contracts.
-- [ ] Verified that the screen-by-screen demonstration flow accurately mirrors `/play` interface behavior.
-- [ ] Confirmed that NASA scientific disclaimers strictly distinguish STEREO A space weather from educational game points.
-- [ ] Confirmed that offline backup recovery plans align with the Next.js route handler implementation.
+- [ ] Verified that the screen-by-screen demonstration flow accurately mirrors `/play` interface behavior without jumping from Day 2 directly to Results.
+- [ ] Confirmed that duplicate Finish Day click instructions have been eliminated.
+- [ ] Confirmed that NASA scientific disclaimers strictly distinguish STEREO A space weather from educational game points, and separate authentic observations from fictional dilemmas.
+- [ ] Confirmed that automated test counts are accurately reconciled to 31 test suites and 124 passing assertions.
+- [ ] Confirmed that unsupported claims about complete accessibility certification, exact millisecond performance, and guaranteed offline browser behavior are removed.
+- [ ] Confirmed that the six-slide storyboard public link remains marked PENDING.
 - [ ] Confirmed that unperformed human dry runs and organizer meeting confirmations are transparently marked **NOT VERIFIED**.
