@@ -1,7 +1,8 @@
 # TriOrbit — Lunar Survival Simulator
 
 > **NASA Space Apps Challenge 2026** — *Junior Astronaut Mission Trainer*  
-> **Repository:** [abhi190503/triorbit-lunar-mission](https://github.com/abhi190503/triorbit-lunar-mission)
+> **Repository:** [abhi190503/triorbit-lunar-mission](https://github.com/abhi190503/triorbit-lunar-mission)  
+> **Project Board:** [TriOrbit | NASA Space Apps 2026](https://github.com/users/abhi190503/projects/1)
 
 ---
 
@@ -37,6 +38,15 @@ To maximize speed and parallel progress during the hackathon, the team operates 
 - `work/vibhushan-engine` — Vibhushan's pure TypeScript game simulation engine and type definitions.
 - `work/nirsanth-science` — Nirsanth's NASA backend route handler, scenario data, educational panels.
 - `integrate/mission` — Final integration branch for assembling lanes before merging into `develop` and promoting to `main`.
+
+---
+
+## 📋 Task Tracking & Project Board
+
+All 31 canonical tasks (`TRI-001` through `TRI-031`) are tracked on the GitHub Projects board and mapped to GitHub issues:
+
+- **Board:** [TriOrbit | NASA Space Apps 2026](https://github.com/users/abhi190503/projects/1)
+- **Issue Mapping:** [`planning/created_issue_links.csv`](planning/created_issue_links.csv)
 
 ---
 
