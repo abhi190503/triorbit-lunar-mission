@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { ActionId, GameScenario, GameState } from '@/lib/game/types';
 import type { LunarModuleId } from './ModuleHotspot';
 import { scoreMission, isEventPending } from '@/lib/game/controller';
@@ -53,12 +53,21 @@ export function MissionScreen({
   const [isMuted, setIsMuted] = useState(false);
   const [nasaProvenance, setNasaProvenance] = useState<'live' | 'verified-fallback'>('verified-fallback');
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(() => ({
-    text:
-      gameState.day > 1
-        ? `Saved mission restored: Day ${gameState.day} morning operations active.`
-        : 'Day 1 morning operations active. Select a lunar facility to inspect maintenance actions.',
+    text: 'Day 1 morning operations active. Select a lunar facility to inspect maintenance actions.',
     type: 'info',
   }));
+
+  // Update feedback when saved progress is restored on client post-hydration
+  const hasAnnouncedRestoreRef = useRef(false);
+  useEffect(() => {
+    if (gameState.day > 1 && !hasAnnouncedRestoreRef.current) {
+      hasAnnouncedRestoreRef.current = true;
+      setFeedback({
+        text: `Saved mission restored: Day ${gameState.day} morning operations active.`,
+        type: 'info',
+      });
+    }
+  }, [gameState.day]);
 
   // Event modal is open whenever gameState is in mandatory event phase
   const isEventModalOpen = gameState.phase === 'event' && Boolean(gameState.currentScenarioId);
