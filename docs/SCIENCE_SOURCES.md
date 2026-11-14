@@ -322,3 +322,29 @@ The offline fallback fixture contains authentic records directly verified agains
 - **Resilience:** Bounded timeout (4000ms default) via `AbortController`. On timeout, rate limit (429), gateway error (404/500), or malformed response, falls back to `verified-events.json` with `provenance: 'verified-fallback'`.
 - **Security:** `NASA_API_KEY` is consumed strictly server-side; no credentials appear in client payloads or response headers.
 - **Scientific Honesty:** All responses carry the mandatory caution: *"NASA DONKI records interplanetary space weather observations; they do not represent biological radiation absorption on the lunar surface."*
+
+---
+
+## 13. Educational Science Facts & Attribution Panel (TRI-018)
+
+### Educational Science Knowledge Base (`src/data/science-facts.ts`)
+TRI-018 establishes a standalone educational knowledge base designed for learners aged 7–12. Every fact links an authentic space science concept directly to gameplay decisions in TriOrbit:
+
+| Fact ID | Topic | Category | Verified NASA Source | Traceable Source Link | Gameplay Connection |
+|---|---|---|---|---|---|
+| `fact-sep-events` | Solar Storms & High-Speed Particles | `NASA-observation` | NASA CCMC DONKI (Alert 30728/1) | `https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30717/-1` | Day 2 space weather dilemma; motivating the regolith bunker shelter decision. |
+| `fact-telemetry-vs-moon` | Spacecraft Telemetry vs. Lunar Surface | `educational-explanation` | NASA Open APIs Portal | `https://api.nasa.gov/` | Decoupling in-game Radiation Risk (0–100) from physical biological dosimetry. |
+| `fact-space-weather-tracking` | What is NASA DONKI? | `NASA-observation` | NASA CCMC Space Weather Center | `https://ccmc.gsfc.nasa.gov/DONKI/` | Simulating authentic mission control alerts and space weather bulletins. |
+| `fact-regolith-shielding` | Moon Soil as a Radiation Shield | `educational-explanation` | NASA Open Data / Exploration Architecture | `https://api.nasa.gov/` | 'Reinforce Shelter' maintenance action and bunker subsystem mechanics. |
+| `fact-bioregenerative-greenhouses` | Plants in Space: Fresh Air & Food | `educational-explanation` | NASA & CSA Life Support Studies | `https://api.nasa.gov/` | 'Operate Greenhouse' maintenance action and closed-loop recycling. |
+
+### Component Implementation (`src/components/learn/ScienceDrawer.tsx`)
+- **Architecture:** Standalone, client-side slide-over drawer operating independently of unfinished GameState, engine functions, or HUD components.
+- **Accessibility:**
+  - Dialog semantics: `role="dialog"`, `aria-modal="true"`, `aria-labelledby="science-drawer-title"`.
+  - Focus trap with Tab/Shift+Tab wrapping.
+  - Automatic focus management (focuses close button on mount; restores previous focus on unmount).
+  - Dismissable via Escape key and backdrop click.
+  - Accessible external links with `target="_blank" rel="noopener noreferrer"` and explicit screen-reader labels.
+- **Scientific Honesty Notice:** Prominently communicates that NASA DONKI records interplanetary space weather observations and does not measure biological radiation absorption on the lunar surface. All resource units are simplified educational game points (0–100).
+- **Styling:** Component-local Tailwind styling matching the lunar habitat aesthetic without altering global design tokens.
