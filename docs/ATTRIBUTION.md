@@ -201,3 +201,29 @@ A comprehensive post-integration re-audit was performed against commit `5ee917a7
 - **Audit Completed By:** Nirsanth A. (`@nirsanth23`) — 14 November 2026
 - **Independent Review Requested From:** Abhinaya Jeyakumar (`@abhi190503`)
 - **Reviewer Sign-off:** PENDING INDEPENDENT PR REVIEW
+
+---
+
+## 15. Final Challenge Listing Resolution & Audit Sign-Off
+
+**Resolution Date:** 14 November 2026, 21:30 Asia/Colombo
+**Lead Auditor:** Nirsanth A. (`@nirsanth23`)
+**Resolution Baseline Commit:** `6103cc5` (`develop`)
+
+### 15.1 Official Challenge Resource Reconciliation
+- **Canonical Challenge Title:** *Build a Junior Astronaut Mission Trainer*
+- **Canonical Challenge URL:** `https://www.spaceappschallenge.org/2026/challenges/build-a-junior-astronaut-mission-trainer/`
+- **Resource Verification:** Official challenge guidelines explicitly recommend **NASA DONKI** (Space Weather Database Of Notifications, Knowledge, Information) to model space weather emergencies (solar flares, coronal mass ejections, and particle events) and test radiation shielding trade-offs.
+- **Verification Status:** **PASS — VERIFIED**.
+
+### 15.2 Final Audit Criteria Resolution
+| Audit Criterion | Expected Standard | Observed Implementation Evidence | Final Status |
+|---|---|---|---|
+| **1. Challenge-Listed NASA Source** | Authentic dataset recommended by challenge | NASA CCMC DONKI explicitly listed; drives Day 2 SEP mission event (`2024-05-11T04:07:00-SEP-001`) | **PASS** |
+| **2. Measurement vs. Educational Model** | Clear distinction between data & game units | In-game vitals clamped $[0, 100]$ as normalized points; no biological dosimetry claimed | **PASS** |
+| **3. Borrowed Code & Asset Licensing** | 100% permissive licensing & attribution | 100% MIT / Apache-2.0 dependencies; zero copyleft; original vector graphics | **PASS** |
+| **4. AI Disclosure Transparency** | Full disclosure of AI tools & human review | Antigravity IDE and Copilot disclosed with 100% human engineering verification | **PASS** |
+| **5. Link Integrity** | Active HTTPS source references | Verified active endpoints for NASA Open APIs, CCMC DONKI, and canonical challenge URL | **PASS** |
+
+### 15.3 Conclusion
+All five mandatory acceptance criteria for TRI-025 are completely verified, satisfied, and documented.
