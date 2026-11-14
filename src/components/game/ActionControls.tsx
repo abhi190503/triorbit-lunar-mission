@@ -132,7 +132,7 @@ export function ActionControls({
                   data-testid={`action-card-${action.id}`}
                   className={`
                     flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-lg
-                    border transition-all
+                    border transition-all duration-150 motion-reduce:transition-none
                     ${
                       canExecute
                         ? 'bg-[#162640]/90 border-[#1F3352] hover:border-[#60E5F4]/60 hover:shadow-[0_0_12px_rgba(96,229,244,0.15)]'

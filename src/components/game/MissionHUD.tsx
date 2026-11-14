@@ -229,7 +229,7 @@ export function MissionHUD({
           {/* Mission Day Title */}
           <div className="flex items-center gap-2">
             <span
-              className="w-2.5 h-2.5 rounded-full bg-[#60E5F4] animate-pulse"
+              className="w-2.5 h-2.5 rounded-full bg-[#60E5F4] animate-pulse motion-reduce:animate-none"
               aria-hidden="true"
             />
             <h2 className="text-xs sm:text-sm font-mono font-bold tracking-wider uppercase text-[#60E5F4]">
@@ -267,7 +267,7 @@ export function MissionHUD({
                 data-active={isCurrent}
                 data-completed={isCompleted}
                 className={`
-                  flex-1 h-2 rounded-full transition-all duration-200 relative
+                  flex-1 h-2 rounded-full transition-all duration-200 motion-reduce:transition-none relative
                   ${isCurrent
                     ? 'bg-[#60E5F4] shadow-[0_0_8px_rgba(96,229,244,0.6)] ring-1 ring-[#60E5F4]'
                     : isCompleted
@@ -336,7 +336,7 @@ export function MissionHUD({
                 key={`action-slot-dot-${slotIndex}`}
                 data-testid={`hud-action-slot-${slotIndex}`}
                 className={`
-                  w-4 h-4 rounded-md flex items-center justify-center text-[10px] font-mono font-bold transition-all
+                  w-4 h-4 rounded-md flex items-center justify-center text-[10px] font-mono font-bold transition-all duration-150 motion-reduce:transition-none
                   ${isFilled
                     ? 'bg-[#60E5F4] text-[#080F20] shadow-[0_0_8px_rgba(96,229,244,0.4)]'
                     : 'bg-[#080F20] border border-[#1F3352] text-[#8FA2BA]'

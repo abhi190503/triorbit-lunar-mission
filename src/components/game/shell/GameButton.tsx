@@ -68,7 +68,7 @@ export const GameButton = forwardRef<HTMLButtonElement, GameButtonProps>(
         disabled={isDisabled}
         aria-busy={isLoading}
         className={`
-          inline-flex items-center justify-center select-none tracking-wide transition-all duration-150 cursor-pointer
+          inline-flex items-center justify-center select-none tracking-wide transition-all duration-150 cursor-pointer motion-reduce:transition-none motion-reduce:transform-none
           focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080F20] focus-visible:outline-none
           ${fullWidth ? 'w-full' : ''}
           ${SIZE_STYLES[size]}

@@ -99,7 +99,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+  transition: border-color 180ms cubic-bezier(0, 0, 0.2, 1),
+              background-color 180ms cubic-bezier(0, 0, 0.2, 1),
+              box-shadow 180ms cubic-bezier(0, 0, 0.2, 1);
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -123,7 +125,7 @@
 .lunar-hotspot--selected {
   border-color: #60e5f4 !important;
   background-color: rgba(96, 229, 244, 0.12) !important;
-  box-shadow: 0 0 22px 4px rgba(96, 229, 244, 0.45), inset 0 0 16px rgba(96, 229, 244, 0.2) !important;
+  box-shadow: 0 0 18px 2px rgba(96, 229, 244, 0.35), inset 0 0 12px rgba(96, 229, 244, 0.15) !important;
 }
 
 /* Disabled state when interactions are locked or zero actions remain */
@@ -158,7 +160,11 @@
   white-space: nowrap;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6), 0 0 8px rgba(96, 229, 244, 0.2);
   pointer-events: none;
-  transition: transform 200ms ease, background-color 200ms ease, border-color 200ms ease;
+  transition: transform 180ms cubic-bezier(0, 0, 0.2, 1),
+              background-color 180ms cubic-bezier(0, 0, 0.2, 1),
+              border-color 180ms cubic-bezier(0, 0, 0.2, 1),
+              box-shadow 180ms cubic-bezier(0, 0, 0.2, 1),
+              color 180ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .lunar-hotspot:hover:not(:disabled) .lunar-hotspot-badge {
@@ -190,7 +196,7 @@
 
 .lunar-hotspot--selected .lunar-hotspot-beacon {
   background-color: #60e5f4;
-  animation: hotspot-selected-pulse 1.4s infinite ease-in-out;
+  animation: hotspot-selected-pulse 2.2s infinite ease-in-out;
 }
 
 /* ============================================================================
@@ -336,11 +342,11 @@
 @keyframes hotspot-selected-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 10px rgba(96, 229, 244, 0.7);
+    box-shadow: 0 0 8px rgba(96, 229, 244, 0.7);
   }
   50% {
-    transform: scale(1.18);
-    box-shadow: 0 0 16px rgba(96, 229, 244, 1);
+    transform: scale(1.06);
+    box-shadow: 0 0 12px rgba(96, 229, 244, 0.95);
   }
 }
 
@@ -352,13 +358,16 @@
   .lunar-scene-image,
   .lunar-hotspot,
   .lunar-hotspot-badge,
+  .lunar-hotspot-beacon,
   .lunar-hotspot-telemetry,
   .lunar-mobile-tab-btn {
     transition: none !important;
   }
 
-  .lunar-hotspot-beacon {
+  .lunar-hotspot-beacon,
+  .lunar-hotspot--selected .lunar-hotspot-beacon {
     animation: none !important;
+    transform: none !important;
   }
 
   .lunar-hotspot:hover:not(:disabled) .lunar-hotspot-badge,
