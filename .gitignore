@@ -32,6 +32,10 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Testing & Coverage
+coverage/
+*.pem
+
 # OS & Editor files
 .DS_Store
 Thumbs.db
