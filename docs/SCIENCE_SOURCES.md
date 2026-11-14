@@ -283,3 +283,42 @@ Scientific Limitation: STEREO A spacecraft in-situ detector observation; not a m
 | `https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30717/-1` | 2026-11-14 11:11 UTC+5:30 | Verified in API Payload | Canonical link URL returned in authentic NASA response body | **PASS** |
 | `https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30728/1` | 2026-11-14 11:11 UTC+5:30 | Verified in API Payload | Official notification URL returned in authentic NASA response body | **PASS** |
 | `https://kauai.ccmc.gsfc.nasa.gov/DONKI/view/Alert/30728/1` | 2026-11-14 11:11 UTC+5:30 | Connection Timeout | Legacy host `kauai.ccmc.gsfc.nasa.gov` unresponsive; replaced by `ccmc.gsfc.nasa.gov` | **SUPERSEDED HOST** |
+
+---
+
+## 12. Implementation Evidence & Offline Fallback Fixture (TRI-010)
+
+### Bundled Offline Fixture (`src/data/nasa/verified-events.json`)
+The offline fallback fixture contains authentic records directly verified against live NASA DONKI API responses:
+
+```json
+[
+  {
+    "id": "2024-05-11T04:07:00-SEP-001",
+    "type": "SEP",
+    "occurredAt": "2024-05-11T04:07Z",
+    "title": "STEREO A Solar Energetic Particle Event (13-100 MeV)",
+    "sourceUrl": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30717/-1",
+    "source": "NASA DONKI"
+  },
+  {
+    "id": "2024-05-11T02:10:00-SEP-001",
+    "type": "SEP",
+    "occurredAt": "2024-05-11T02:10Z",
+    "title": "GOES-P Solar Energetic Particle Event (>100 MeV)",
+    "sourceUrl": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30714/-1",
+    "source": "NASA DONKI"
+  }
+]
+```
+
+### Normalization Logic & Architecture (`src/lib/nasa/donki.ts`)
+- **Route:** `GET /api/nasa/events` (`src/app/api/nasa/events/route.ts`)
+- **Provider Endpoint:** `https://api.nasa.gov/DONKI/SEP` with default window `2024-05-11` to `2024-05-12`.
+- **Field Normalization:**
+  - SEP: `sepID` -> `id`, `eventTime` -> `occurredAt` (ISO 8601), `link` -> `sourceUrl`, `'SEP'` -> `type`, `'NASA DONKI'` -> `source`.
+  - FLR: `flrID` -> `id`, `beginTime` -> `occurredAt`, `link` -> `sourceUrl`, `'FLR'` -> `type`, `classType` -> `classType`.
+- **Validation:** Enforces nonempty strings, valid ISO dates, and HTTPS URLs.
+- **Resilience:** Bounded timeout (4000ms default) via `AbortController`. On timeout, rate limit (429), gateway error (404/500), or malformed response, falls back to `verified-events.json` with `provenance: 'verified-fallback'`.
+- **Security:** `NASA_API_KEY` is consumed strictly server-side; no credentials appear in client payloads or response headers.
+- **Scientific Honesty:** All responses carry the mandatory caution: *"NASA DONKI records interplanetary space weather observations; they do not represent biological radiation absorption on the lunar surface."*
