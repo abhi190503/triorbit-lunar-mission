@@ -220,3 +220,22 @@ An exhaustive audit across `docs/ASSUMPTIONS.md`, `docs/GAME_RULES.md`, `docs/IN
 3. **Scenario Timing:** Reconciled illustrative early planning drafts to align with the frozen implementation schedule: Day 2 (`solar-activity`), Day 3 (`power-outage`), and Day 4 (`greenhouse-water`).
 4. **External Documentation Defect Logged:** Identified in `README.md` (Line 14) that physical unit abbreviations ($kW$, $L$, $kg$) were placed next to resource names. Logged for README owner (`@abhi190503`) to update in the final documentation polishing pass.
 5. **Post-Integration Verification:** Verified through 124 passing end-to-end integration assertions that all assumptions operate deterministically in the running application.
+
+---
+
+## 9. Final Challenge Guidance Reconciliation (TRI-025 Resolution)
+
+**Audit Resolution Date:** 14 November 2026, 21:30 Asia/Colombo
+**Auditor:** Nirsanth A. (`@nirsanth23`)
+
+### 9.1 Pedagogical Calibration Alignment
+Official guidelines for the *Build a Junior Astronaut Mission Trainer* challenge specifically advise developers to:
+- Avoid overwhelming junior astronauts (ages 7–12) with micro-meters or complex physical formulas.
+- Focus on clear cause-and-effect resource trade-offs (e.g. power vs. radiation shielding).
+- Provide forgiving, repeatable mission loops rather than punitive game-overs.
+
+### 9.2 Compliance Confirmation
+TriOrbit's educational modeling decisions directly mirror this official guidance:
+1. **Simplified Core Vitals:** 5 normalized educational points ($0–100$) replace confusing physical units ($kW$, $L$, $kg$, $Sv$).
+2. **Clear Dilemma Trade-offs:** The Day 2 DONKI solar particle event requires an explicit trade-off between power consumption and radiation shielding.
+3. **Resilient Mission Loop:** Instant 1-click replay resets the 5-day cycle for repeated classroom exploration.

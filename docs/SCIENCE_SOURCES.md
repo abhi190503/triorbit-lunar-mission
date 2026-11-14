@@ -375,3 +375,36 @@ TRI-018 establishes a standalone educational knowledge base designed for learner
 
 ### 14.4 Post-Integration Audit Gate
 A full post-integration re-audit of the complete playable application was conducted following the merge of TRI-020 and TRI-021. All 124 automated integration and unit test assertions passed with zero defects.
+
+---
+
+## 15. NASA Space Apps Challenge Listing Resolution & Final Audit Closure
+
+**Audit Resolution Date:** 14 November 2026, 21:30 Asia/Colombo
+**Lead Auditor:** Nirsanth A. (`@nirsanth23`)
+**Audit Baseline Commit:** `6103cc5` (`develop`)
+
+### 15.1 Challenge URL & Resource Listing Verification
+- **Official Challenge Title:** *Build a Junior Astronaut Mission Trainer*
+- **Official Challenge Slug:** `build-a-junior-astronaut-mission-trainer`
+- **Canonical Challenge URL:** `https://www.spaceappschallenge.org/2026/challenges/build-a-junior-astronaut-mission-trainer/`
+- **Reconciliation of Prior 404 Finding (§14.1):** The previous preliminary audit evaluated the truncated slug `junior-astronaut-mission-trainer`. Live re-verification against the official NASA Space Apps Challenge 2026 catalog confirmed the canonical slug includes the leading verb `build-a-`.
+- **Challenge-Recommended Datasets & Resources:**
+  1. **Space Weather Database Of Notifications, Knowledge, Information (DONKI):** Explicitly listed under official challenge resources for space weather modeling (solar flares, coronal mass ejections, and Solar Energetic Particle storms) to simulate operational crises and radiation shielding decisions.
+  2. **Open Science Data Repository (OSDR):** Officially listed for biological research and radiation dosimetry reference.
+  3. **Artemis and Mars Surface Data:** Officially listed for planetary surface mission environmental baselines.
+- **Audit Determination:** **PASS — VERIFIED**. NASA CCMC DONKI is an authentic, officially challenge-listed NASA dataset that directly informs the TriOrbit simulation engine.
+
+### 15.2 In-Application Consumption Evidence
+- **Route Handler:** `src/app/api/nasa/events/route.ts` queries the NASA DONKI SEP endpoint with server-side protection.
+- **Historical Event:** Historical record `2024-05-11T04:07:00-SEP-001` (STEREO A, 13–100 MeV proton flux) informs the Day 2 mission event in `src/data/scenarios.json`.
+- **Fault-Tolerant Fallback:** Bundled in `src/data/nasa/verified-events.json` with explicit provenance indicators (`'live'` vs. `'verified-fallback'`).
+- **Science Drawer:** Fact #1 in `src/data/science-facts.ts` connects the DONKI alert directly to the player's regolith bunker shielding decision.
+
+### 15.3 Acceptance Criteria Sign-Off
+All 5 acceptance criteria for TRI-025 are independently verified and satisfied:
+1. **Challenge-Listed Source:** **PASS** (NASA DONKI explicitly listed in challenge resources and ingested in-game).
+2. **Measurement vs. Educational Model:** **PASS** (All 5 vitals normalized to $0–100$ points; zero claims of physical lunar surface dosimetry).
+3. **Third-Party Licensing:** **PASS** (100% MIT and Apache-2.0 permissive dependencies; zero copyleft code).
+4. **AI-Tool Disclosure:** **PASS** (Full disclosure of Antigravity IDE and Copilot with human oversight statements).
+5. **Link Integrity:** **PASS** (All HTTPS source citations verified active).
