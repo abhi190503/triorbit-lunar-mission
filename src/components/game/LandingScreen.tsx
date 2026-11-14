@@ -72,22 +72,46 @@ export function LandingScreen({
     onBeginMission();
   }, [onBeginMission]);
 
-  // Global keyboard shortcuts: Enter starts mission, H or ? opens tutorial
+  // Global keyboard shortcuts: Enter starts mission (unless focused on interactive controls), H or ? opens tutorial
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't intercept if inside an open modal or input element
+      // Don't intercept if inside an open modal
       if (isTutorialOpen) return;
+
       const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-        return;
-      }
+
+      // Do NOT intercept Enter on buttons, links, inputs, or any interactive element to preserve native activation
+      const isInteractive = Boolean(
+        target && (
+          target.tagName === 'BUTTON' ||
+          target.tagName === 'A' ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.getAttribute('role') === 'button' ||
+          target.getAttribute('role') === 'tab' ||
+          target.getAttribute('role') === 'link' ||
+          target.isContentEditable
+        )
+      );
 
       if (event.key === 'Enter') {
-        event.preventDefault();
-        handleBeginMission();
+        if (!isInteractive) {
+          event.preventDefault();
+          handleBeginMission();
+        }
       } else if (event.key === 'h' || event.key === 'H' || event.key === '?') {
-        event.preventDefault();
-        handleOpenTutorial();
+        const isTextInput = Boolean(
+          target && (
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable
+          )
+        );
+        if (!isTextInput) {
+          event.preventDefault();
+          handleOpenTutorial();
+        }
       }
     };
 
@@ -124,48 +148,53 @@ export function LandingScreen({
         aria-label="Mission Command Landing Stage"
         className="relative w-full flex-1 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 overflow-hidden min-h-[calc(100vh-140px)]"
       >
-        {/* Background Visual Layer: Real Artwork with Atmospheric CSS Fallback */}
+        {/* Background Visual Layer: Real Artwork with Transparent Atmospheric Overlay & Fallback */}
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden"
           data-artwork-fallback={imageFailed ? 'temporary-pre-tri-014' : undefined}
         >
-          {/* Optional Production Image Layer */}
+          {/* Base Space Sky Canvas (rendered behind image or as fallback backdrop) */}
+          <div className="absolute inset-0 bg-space-mesh z-0" />
+
+          {/* Realistic Lunar Outpost Image Layer (rendered above base sky so it remains fully visible) */}
           {!imageFailed && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={resolvedImageSrc}
               alt=""
               onError={() => setImageFailed(true)}
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-40 mix-blend-screen transition-opacity duration-500"
+              className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 z-[1]"
             />
           )}
 
-          {/* Atmospheric Cinematic Space Sky (Active or Fallback) */}
-          <div className="absolute inset-0 bg-space-mesh" />
+          {/* Transparent Atmospheric Vignette Overlay (sits above image or fallback) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080F20] via-transparent to-[#080F20]/60 z-[2] pointer-events-none" />
 
           {/* Distant Earthrise Crescent Glow */}
           <div
-            className="absolute top-8 right-8 sm:top-16 sm:right-24 w-32 h-32 sm:w-48 sm:h-48 rounded-full opacity-70 pointer-events-none"
+            className="absolute top-8 right-8 sm:top-16 sm:right-24 w-32 h-32 sm:w-48 sm:h-48 rounded-full opacity-70 pointer-events-none z-[3]"
             style={{
               background: 'radial-gradient(circle at 35% 35%, rgba(96, 229, 244, 0.45) 0%, rgba(92, 156, 255, 0.25) 45%, transparent 75%)',
               boxShadow: '0 0 40px 10px rgba(96, 229, 244, 0.2)',
             }}
           />
 
-          {/* Stylized Lunar Surface Horizon */}
-          <div
-            className="absolute -bottom-24 -left-12 -right-12 h-64 sm:h-80 rounded-[50%] opacity-90"
-            style={{
-              background: 'radial-gradient(ellipse 65% 50% at 50% 100%, #162640 0%, #101D35 60%, #080F20 100%)',
-              borderTop: '1px solid rgba(96, 229, 244, 0.15)',
-              boxShadow: '0 -20px 60px rgba(8, 15, 32, 0.9)',
-            }}
-          />
+          {/* Stylized Lunar Surface Horizon (visible in CSS fallback when image is unavailable) */}
+          {imageFailed && (
+            <div
+              className="absolute -bottom-24 -left-12 -right-12 h-64 sm:h-80 rounded-[50%] opacity-90 z-[2]"
+              style={{
+                background: 'radial-gradient(ellipse 65% 50% at 50% 100%, #162640 0%, #101D35 60%, #080F20 100%)',
+                borderTop: '1px solid rgba(96, 229, 244, 0.15)',
+                boxShadow: '0 -20px 60px rgba(8, 15, 32, 0.9)',
+              }}
+            />
+          )}
 
           {/* Ambient Habitat Cyan & Amber Light Beacons */}
-          <div className="absolute bottom-16 left-1/4 w-72 h-36 bg-[#60E5F4]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-20 right-1/4 w-72 h-36 bg-[#FFCA72]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-16 left-1/4 w-72 h-36 bg-[#60E5F4]/10 rounded-full blur-3xl pointer-events-none z-[3]" />
+          <div className="absolute bottom-20 right-1/4 w-72 h-36 bg-[#FFCA72]/10 rounded-full blur-3xl pointer-events-none z-[3]" />
         </div>
 
         {/* Foreground Content Card & Call To Action */}
@@ -322,4 +351,3 @@ export function LandingScreen({
     </GameShell>
   );
 }
-

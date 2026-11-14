@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { GameModal } from './shell/GameModal';
 import { GameButton } from './shell/GameButton';
 import { GameBadge } from './shell/GameBadge';
@@ -8,10 +8,13 @@ import { DAILY_DRAIN, TOTAL_MISSION_DAYS, MAX_ACTIONS_PER_DAY } from '@/lib/game
 
 export type TutorialTab = 'quickstart' | 'modules' | 'vitals' | 'controls';
 
+const TAB_ORDER: TutorialTab[] = ['quickstart', 'modules', 'vitals', 'controls'];
+
 export interface MissionTutorialProps {
   isOpen: boolean;
   onClose: () => void;
   onBeginMission?: () => void;
+  defaultTab?: TutorialTab;
   className?: string;
 }
 
@@ -19,13 +22,46 @@ export function MissionTutorial({
   isOpen,
   onClose,
   onBeginMission,
+  defaultTab = 'quickstart',
 }: MissionTutorialProps) {
-  const [activeTab, setActiveTab] = useState<TutorialTab>('quickstart');
+  const [activeTab, setActiveTab] = useState<TutorialTab>(defaultTab);
+  const tabRefs = useRef<Record<TutorialTab, HTMLButtonElement | null>>({
+    quickstart: null,
+    modules: null,
+    vitals: null,
+    controls: null,
+  });
 
   const handleStartMission = () => {
     onClose();
     if (onBeginMission) {
       onBeginMission();
+    }
+  };
+
+  // WAI-ARIA accessible keyboard navigation across tabs (Arrow Left/Right/Up/Down, Home, End)
+  const handleTabKeyDown = (event: React.KeyboardEvent, currentTab: TutorialTab) => {
+    const currentIndex = TAB_ORDER.indexOf(currentTab);
+    let nextIndex = -1;
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      nextIndex = (currentIndex + 1) % TAB_ORDER.length;
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      nextIndex = (currentIndex - 1 + TAB_ORDER.length) % TAB_ORDER.length;
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      nextIndex = TAB_ORDER.length - 1;
+    }
+
+    if (nextIndex >= 0) {
+      const nextTab = TAB_ORDER[nextIndex];
+      setActiveTab(nextTab);
+      tabRefs.current[nextTab]?.focus();
     }
   };
 
@@ -88,7 +124,7 @@ export function MissionTutorial({
       }
     >
       <div className="space-y-5">
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs (WAI-ARIA with Arrow Key Navigation) */}
         <div
           role="tablist"
           aria-label="Tutorial Sections"
@@ -98,9 +134,12 @@ export function MissionTutorial({
             type="button"
             role="tab"
             id="tab-quickstart"
+            ref={(el) => { tabRefs.current.quickstart = el; }}
             aria-selected={activeTab === 'quickstart'}
             aria-controls="panel-quickstart"
+            tabIndex={activeTab === 'quickstart' ? 0 : -1}
             onClick={() => setActiveTab('quickstart')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'quickstart')}
             className={`
               flex-1 min-w-[120px] px-3 py-2 rounded-lg text-xs font-semibold font-mono tracking-wide transition-all
               focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[40px]
@@ -117,9 +156,12 @@ export function MissionTutorial({
             type="button"
             role="tab"
             id="tab-modules"
+            ref={(el) => { tabRefs.current.modules = el; }}
             aria-selected={activeTab === 'modules'}
             aria-controls="panel-modules"
+            tabIndex={activeTab === 'modules' ? 0 : -1}
             onClick={() => setActiveTab('modules')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'modules')}
             className={`
               flex-1 min-w-[120px] px-3 py-2 rounded-lg text-xs font-semibold font-mono tracking-wide transition-all
               focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[40px]
@@ -136,9 +178,12 @@ export function MissionTutorial({
             type="button"
             role="tab"
             id="tab-vitals"
+            ref={(el) => { tabRefs.current.vitals = el; }}
             aria-selected={activeTab === 'vitals'}
             aria-controls="panel-vitals"
+            tabIndex={activeTab === 'vitals' ? 0 : -1}
             onClick={() => setActiveTab('vitals')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'vitals')}
             className={`
               flex-1 min-w-[120px] px-3 py-2 rounded-lg text-xs font-semibold font-mono tracking-wide transition-all
               focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[40px]
@@ -155,9 +200,12 @@ export function MissionTutorial({
             type="button"
             role="tab"
             id="tab-controls"
+            ref={(el) => { tabRefs.current.controls = el; }}
             aria-selected={activeTab === 'controls'}
             aria-controls="panel-controls"
+            tabIndex={activeTab === 'controls' ? 0 : -1}
             onClick={() => setActiveTab('controls')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'controls')}
             className={`
               flex-1 min-w-[120px] px-3 py-2 rounded-lg text-xs font-semibold font-mono tracking-wide transition-all
               focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[40px]
@@ -222,10 +270,10 @@ export function MissionTutorial({
                   <GameBadge variant="nominal" size="sm">Rule 3</GameBadge>
                 </div>
                 <h4 className="text-xs font-bold text-[#F4F7FC] uppercase font-mono">
-                  NASA Space Weather
+                  Mission Dilemmas
                 </h4>
                 <p className="text-xs text-[#A8B8D0] leading-normal">
-                  On Days 2, 3, & 4, real NASA observations detect solar storms. Choose tactical shelters to protect your crew!
+                  On Days 2, 3, & 4, face critical dilemmas: Day 2 features an authentic NASA DONKI solar storm observation, followed by two simulated habitat emergencies.
                 </p>
               </div>
             </div>
@@ -403,7 +451,7 @@ export function MissionTutorial({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-mono">
               <div className="p-3 rounded-lg bg-[#080F20] border border-[#1F3352] flex items-center justify-between">
-                <span className="text-[#A8B8D0]">Begin Mission / Enter</span>
+                <span className="text-[#A8B8D0]">Begin Mission / Start</span>
                 <kbd className="px-2 py-1 rounded bg-[#162640] border border-[#1F3352] text-[#60E5F4] text-xs">
                   Enter ↵
                 </kbd>
@@ -424,9 +472,16 @@ export function MissionTutorial({
               </div>
 
               <div className="p-3 rounded-lg bg-[#080F20] border border-[#1F3352] flex items-center justify-between">
-                <span className="text-[#A8B8D0]">Navigate Facilities</span>
+                <span className="text-[#A8B8D0]">Navigate Controls</span>
                 <kbd className="px-2 py-1 rounded bg-[#162640] border border-[#1F3352] text-[#60E5F4] text-xs">
-                  Tab / Arrows
+                  Tab / Shift+Tab
+                </kbd>
+              </div>
+
+              <div className="p-3 rounded-lg bg-[#080F20] border border-[#1F3352] flex items-center justify-between sm:col-span-2">
+                <span className="text-[#A8B8D0]">Switch Guide Tabs</span>
+                <kbd className="px-2 py-1 rounded bg-[#162640] border border-[#1F3352] text-[#60E5F4] text-xs">
+                  ← / → Arrow Keys
                 </kbd>
               </div>
             </div>
