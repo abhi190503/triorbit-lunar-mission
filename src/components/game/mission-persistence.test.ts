@@ -10,6 +10,8 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { hydrateRoot } from 'react-dom/client';
+import { JSDOM } from 'jsdom';
 import { MissionScreen } from './MissionScreen';
 import { useMission } from '@/hooks/useMission';
 import {
@@ -26,41 +28,24 @@ import {
 import { INITIAL_RESOURCES } from '@/lib/game/contracts';
 import type { GameState } from '@/lib/game/types';
 
-// In-memory mock localStorage for Node test runner
-class MockStorage {
-  private store = new Map<string, string>();
-
-  getItem(key: string): string | null {
-    return this.store.get(key) ?? null;
-  }
-
-  setItem(key: string, value: string): void {
-    this.store.set(key, value);
-  }
-
-  removeItem(key: string): void {
-    this.store.delete(key);
-  }
-
-  clear(): void {
-    this.store.clear();
-  }
-}
-
 describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
-  let mockLocalStorage: MockStorage;
+  let dom: JSDOM;
 
   beforeEach(() => {
-    mockLocalStorage = new MockStorage();
-    (globalThis as unknown as { window: unknown }).window = {
-      localStorage: mockLocalStorage,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    };
+    dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', {
+      url: 'http://localhost:3000',
+    });
+    dom.window.localStorage.clear();
+
+    (globalThis as unknown as { window: unknown }).window = dom.window;
+    (globalThis as unknown as { document: unknown }).document = dom.window.document;
+    (globalThis as unknown as { HTMLElement: unknown }).HTMLElement = dom.window.HTMLElement;
   });
 
   afterEach(() => {
     delete (globalThis as unknown as { window?: unknown }).window;
+    delete (globalThis as unknown as { document?: unknown }).document;
+    delete (globalThis as unknown as { HTMLElement?: unknown }).HTMLElement;
   });
 
   it('preserves canonical frozen initial resources on fresh launch', () => {
@@ -90,9 +75,9 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     );
   });
 
-  it('renders restored in-progress mission when valid save exists in storage (simulated page reload)', () => {
-    // 1. Arrange: User previously reached Day 3 with customized resources
-    const inProgressState: GameState = {
+  it('genuinely hydrates MissionScreen via hydrateRoot without hydration errors and restores saved Day 3 mission', async () => {
+    // 1. Arrange: User previously reached Day 3 with customized vitals and 1 action remaining
+    const day3State: GameState = {
       day: 3,
       phase: 'choose',
       actionsRemaining: 1,
@@ -116,22 +101,63 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
       ],
     };
 
-    saveMission(inProgressState);
+    saveMission(day3State);
     assert.equal(hasSavedMission(), true);
 
-    // 2. Act: Render MissionScreen without explicit initialState (relying on storage restoration)
-    const html = renderToString(React.createElement(MissionScreen));
-
-    // 3. Assert: Component dynamically restored Day 3 state
-    assert.ok(html.includes('Day 3'), 'Must render Day 3 in HUD');
-    assert.ok(html.includes('1 / 2 Actions Left'), 'Must display 1 remaining action');
-    assert.ok(
-      html.includes('Saved mission restored: Day 3 morning operations active'),
-      'Must display saved mission restored notification'
+    // 2. Pure SSR: Server pre-rendering outputs Day 1 baseline
+    const ssrHtml = renderToString(React.createElement(MissionScreen));
+    assert.ok(ssrHtml.includes('Day 1'), 'SSR markup must cleanly pre-render Day 1 baseline');
+    assert.equal(
+      ssrHtml.includes('Saved mission restored: Day 3'),
+      false,
+      'SSR markup must not prematurely contain client-only restored feedback'
     );
+
+    // 3. Client Hydration: Inject SSR HTML into client DOM container
+    const container = dom.window.document.getElementById('root')!;
+    container.innerHTML = ssrHtml;
+
+    const recoverableErrors: string[] = [];
+    const caughtErrors: string[] = [];
+    const uncaughtErrors: string[] = [];
+
+    // 4. Act: Hydrate root on client
+    const root = hydrateRoot(container, React.createElement(MissionScreen), {
+      onRecoverableError(err: unknown) {
+        recoverableErrors.push((err as Error).message);
+      },
+      onCaughtError(err: unknown) {
+        caughtErrors.push((err as Error).message);
+      },
+      onUncaughtError(err: unknown) {
+        uncaughtErrors.push((err as Error).message);
+      },
+    });
+
+    // Wait for hydration and post-mount restoration effect to commit
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    // 5. Assert: Zero hydration errors occurred!
+    assert.equal(
+      recoverableErrors.length,
+      0,
+      `Expected 0 recoverable hydration errors, got: ${recoverableErrors.join('; ')}`
+    );
+    assert.equal(caughtErrors.length, 0, 'Expected 0 caught errors during hydration');
+    assert.equal(uncaughtErrors.length, 0, 'Expected 0 uncaught errors during hydration');
+
+    // Assert: Client DOM dynamically restored Day 3 state
+    const domText = container.textContent || '';
+    assert.ok(
+      domText.includes('Saved mission restored: Day 3 morning operations active'),
+      'Must display saved mission restored notification in DOM'
+    );
+    assert.ok(domText.includes('1 / 2 Actions Left'), 'Must display 1 remaining action in DOM');
+
+    root.unmount();
   });
 
-  it('guarantees that initial mounting cannot overwrite an existing valid saved mission', () => {
+  it('guarantees that initial mounting cannot overwrite an existing valid saved mission', async () => {
     // 1. Arrange: Save a valid Day 4 mission in storage
     const day4State: GameState = {
       day: 4,
@@ -150,41 +176,64 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     };
     saveMission(day4State);
 
-    // 2. Act: Mount component simulating initial render
-    const html = renderToString(React.createElement(MissionScreen));
-    assert.ok(html.includes('Day 4'), 'Component must mount with Day 4');
+    // 2. Act: Mount component simulating initial render and hydration
+    const ssrHtml = renderToString(React.createElement(MissionScreen));
+    const container = dom.window.document.getElementById('root')!;
+    container.innerHTML = ssrHtml;
 
-    // 3. Assert: Storage still contains the original Day 4 save without being overwritten by Day 1 defaults
+    const root = hydrateRoot(container, React.createElement(MissionScreen));
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    // 3. Assert: Storage still contains the original Day 4 save without being overwritten by Day 1 default
     const loaded = loadSavedMission();
     assert.ok(loaded, 'Saved mission must still be present');
     assert.equal(loaded.day, 4, 'Day 4 state must not be overwritten by Day 1 default');
     assert.equal(loaded.resources.oxygen, 65);
     assert.equal(loaded.resources.power, 60);
+
+    root.unmount();
   });
 
-  it('gracefully recovers from corrupted or malformed localStorage payload without crashing', () => {
+  it('gracefully recovers from corrupted or malformed localStorage payload without crashing', async () => {
     // Write unparseable corrupt payload
-    mockLocalStorage.setItem(STORAGE_KEY, '{"version": 1, "state": INVALID_CORRUPT_JSON_DATA');
+    dom.window.localStorage.setItem(STORAGE_KEY, '{"version": 1, "state": INVALID_CORRUPT_JSON_DATA');
 
     // Rendering should not throw and should safely clear the corrupt save
-    let html = '';
-    assert.doesNotThrow(() => {
-      html = renderToString(React.createElement(MissionScreen));
+    const ssrHtml = renderToString(React.createElement(MissionScreen));
+    const container = dom.window.document.getElementById('root')!;
+    container.innerHTML = ssrHtml;
+
+    const recoverableErrors: string[] = [];
+    const root = hydrateRoot(container, React.createElement(MissionScreen), {
+      onRecoverableError(err: unknown) {
+        recoverableErrors.push((err as Error).message);
+      },
     });
 
-    assert.ok(html.includes('Day 1'), 'Must safely fallback to clean Day 1 mission');
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    assert.equal(recoverableErrors.length, 0, 'No hydration errors on corrupted storage fallback');
+    assert.ok(container.textContent?.includes('Day 1'), 'Must safely fallback to clean Day 1 mission');
     assert.equal(loadSavedMission(), null, 'Corrupt payload must be automatically purged');
+
+    root.unmount();
   });
 
-  it('verifies full state persistence lifecycle through mounted useMission hook (actions, day advance, reload)', () => {
+  it('verifies full state persistence lifecycle through mounted useMission hook (actions, day advance, reload)', async () => {
     let hookOutput = null as unknown as ReturnType<typeof useMission>;
     function TestHookHarness() {
       hookOutput = useMission();
       return React.createElement('div', null, `Day: ${hookOutput.gameState.day}`);
     }
 
-    // 1. Initial mount of hook
-    renderToString(React.createElement(TestHookHarness));
+    // 1. Initial mount of hook via hydration
+    const ssrHtml = renderToString(React.createElement(TestHookHarness));
+    const container = dom.window.document.getElementById('root')!;
+    container.innerHTML = ssrHtml;
+
+    const root1 = hydrateRoot(container, React.createElement(TestHookHarness));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
     assert.equal(hookOutput.gameState.day, 1);
     assert.equal(hookOutput.gameState.actionsRemaining, 2);
 
@@ -201,12 +250,13 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     assert.equal(finishResult.state.phase, 'event');
     assert.equal(finishResult.state.currentScenarioId, 'solar-activity');
 
-    // 4. Save is persisted
+    // 4. Save is persisted in storage
     saveMission(finishResult.state);
     const saved = loadSavedMission();
     assert.ok(saved);
     assert.equal(saved.day, 2);
     assert.equal(saved.phase, 'event');
+    root1.unmount();
 
     // 5. Mount a NEW instance of the component (simulating page reload)
     let reloadedHookOutput = null as unknown as ReturnType<typeof useMission>;
@@ -214,7 +264,12 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
       reloadedHookOutput = useMission();
       return React.createElement('div', null, `Day: ${reloadedHookOutput.gameState.day}`);
     }
-    renderToString(React.createElement(ReloadedHarness));
+
+    const reloadSsrHtml = renderToString(React.createElement(ReloadedHarness));
+    container.innerHTML = reloadSsrHtml;
+    const root2 = hydrateRoot(container, React.createElement(ReloadedHarness));
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
     assert.equal(reloadedHookOutput.gameState.day, 2);
     assert.equal(reloadedHookOutput.gameState.phase, 'event');
     assert.equal(reloadedHookOutput.gameState.currentScenarioId, 'solar-activity');
@@ -226,11 +281,14 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
 
     // 7. Replay mission through hook -> resets to Day 1 and purges storage
     reloadedHookOutput.replayMission();
+    await new Promise((resolve) => setTimeout(resolve, 60));
     assert.equal(hasSavedMission(), false);
     assert.equal(loadSavedMission(), null);
+
+    root2.unmount();
   });
 
-  it('renders EventModal dilemma dialog when MissionScreen is mounted from a Day 2 save', () => {
+  it('renders EventModal dilemma dialog when MissionScreen is mounted from a Day 2 save', async () => {
     const day2EventState: GameState = {
       day: 2,
       phase: 'event',
@@ -243,16 +301,101 @@ describe('TRI-024: Component & Gameplay State Persistence Integration', () => {
     };
     saveMission(day2EventState);
 
-    const html = renderToString(React.createElement(MissionScreen));
-    assert.ok(html.includes('role="dialog"'), 'EventModal dialog must be rendered');
+    const ssrHtml = renderToString(React.createElement(MissionScreen));
+    const container = dom.window.document.getElementById('root')!;
+    container.innerHTML = ssrHtml;
+
+    const root = hydrateRoot(container, React.createElement(MissionScreen));
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    const content = container.innerHTML;
+    assert.ok(content.includes('role="dialog"'), 'EventModal dialog must be rendered');
     assert.ok(
-      html.includes('Solar Energetic Particle Warning'),
+      content.includes('Solar Energetic Particle Warning'),
       'Must render Day 2 solar dilemma title'
     );
     assert.ok(
-      html.includes('Shelter crew in shielded regolith bunker'),
+      content.includes('Shelter crew in shielded regolith bunker'),
       'Must render dilemma choices'
     );
+
+    root.unmount();
+  });
+
+  it('handles React Strict Mode double effects safely without race conditions or state loss', async () => {
+    // Arrange: Valid Day 3 mission in storage
+    const day3State: GameState = {
+      day: 3,
+      phase: 'choose',
+      actionsRemaining: 1,
+      resources: { oxygen: 70, power: 75, water: 70, food: 70, radiationRisk: 15 },
+      outcome: 'active',
+      emergencyMistakes: 0,
+      history: [],
+    };
+    saveMission(day3State);
+
+    let hookOutput = null as unknown as ReturnType<typeof useMission>;
+    function StrictModeHarness() {
+      hookOutput = useMission();
+      return React.createElement('div', null, `Day ${hookOutput.gameState.day}`);
+    }
+
+    const container = dom.window.document.getElementById('root')!;
+    const strictTree = React.createElement(
+      React.StrictMode,
+      null,
+      React.createElement(StrictModeHarness)
+    );
+    container.innerHTML = renderToString(strictTree);
+
+    const recoverableErrors: string[] = [];
+    const root = hydrateRoot(container, strictTree, {
+      onRecoverableError(err: unknown) {
+        recoverableErrors.push((err as Error).message);
+      },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    // Assert: Day 3 state restored cleanly under React.StrictMode with zero errors
+    assert.equal(recoverableErrors.length, 0);
+    assert.equal(hookOutput.gameState.day, 3);
+    const saved = loadSavedMission();
+    assert.ok(saved);
+    assert.equal(saved.day, 3);
+    assert.equal(saved.resources.oxygen, 70);
+
+    root.unmount();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  });
+
+  it('handles rapid successive actions safely with synchronous stateRef execution under batching', () => {
+    let hookOutput = null as unknown as ReturnType<typeof useMission>;
+    function RapidHarness() {
+      hookOutput = useMission();
+      return React.createElement('div', null, `Actions: ${hookOutput.gameState.actionsRemaining}`);
+    }
+
+    renderToString(React.createElement(RapidHarness));
+
+    // Dispatch action 1: maintain-solar
+    const res1 = hookOutput.executeAction('maintain-solar');
+    assert.equal(res1.success, true);
+    assert.equal(res1.state.actionsRemaining, 1);
+    assert.equal(res1.state.resources.power, 90);
+
+    // Dispatch action 2 rapidly: generate-oxygen
+    const res2 = hookOutput.executeAction('generate-oxygen');
+    assert.equal(res2.success, true);
+    assert.equal(res2.state.actionsRemaining, 0);
+    assert.equal(res2.state.resources.oxygen, 95);
+
+    // Dispatch action 3 when allowance depleted: must be safely rejected
+    const res3 = hookOutput.executeAction('reinforce-shelter');
+    assert.equal(res3.success, false);
+    assert.ok(res3.reason?.includes('Daily action limit reached'));
+    assert.equal(res3.state.actionsRemaining, 0);
   });
 
   it('renders MissionScreen cleanly in SSR with zero throws and authoritative shell landmarks', () => {

@@ -45,7 +45,9 @@ function subscribe(callback: () => void): () => void {
   window.addEventListener('storage', callback);
   return () => {
     unsubscribeInternal();
-    window.removeEventListener('storage', callback);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', callback);
+    }
   };
 }
 
@@ -58,25 +60,33 @@ function getServerSnapshot(): string | null {
   return null;
 }
 
+/**
+ * Checks whether a mission state represents an untouched pristine Day 1 mission.
+ * Pristine missions should not trigger auto-save until the player performs an action.
+ */
+function isPristineMission(state: GameState): boolean {
+  return (
+    state.day === 1 &&
+    state.actionsRemaining === 2 &&
+    state.history.length === 0 &&
+    state.outcome === 'active'
+  );
+}
+
 export function useMission({
   initialState,
   autoSave = true,
   onMissionComplete,
 }: UseMissionOptions = {}) {
-  // Authoritative simulation state initialized from prop or saved progress
-  const [gameState, setGameState] = useState<GameState>(() => {
-    if (initialState) return initialState;
-    const saved = loadSavedMission();
-    if (saved && saved.outcome === 'active') {
-      return saved;
-    }
-    return createInitialMission();
-  });
+  // Authoritative simulation state:
+  // SSR & initial client render ALWAYS use initialState ?? createInitialMission().
+  // This guarantees that server-rendered HTML and client initial render produce 100% matching output.
+  const [gameState, setGameState] = useState<GameState>(() => initialState ?? createInitialMission());
+  const [isRestored, setIsRestored] = useState(false);
 
   // Keep a mutable ref to the freshest state to guarantee synchronous execution
   // and prevent stale closures across batched updates without accessing refs during render
   const stateRef = useRef<GameState>(gameState);
-  const isFirstMount = useRef(true);
 
   // Synchronize state ref outside render body
   useEffect(() => {
@@ -91,6 +101,23 @@ export function useMission({
       setGameState(initialState);
     }
   }
+
+  // Restore saved mission on client after hydration boundary has committed
+  // Guarantees:
+  // 1. Zero SSR hydration mismatches
+  // 2. Initial mount can NEVER overwrite existing saved progress
+  // 3. React Strict Mode double-invocations remain idempotent and safe
+  useEffect(() => {
+    if (!initialState) {
+      const saved = loadSavedMission();
+      if (saved && saved.outcome === 'active') {
+        stateRef.current = saved;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setGameState(saved);
+      }
+    }
+    setIsRestored(true);
+  }, [initialState]);
 
   // Sync external storage state for cross-tab or external changes
   const rawSaveString = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
@@ -111,21 +138,23 @@ export function useMission({
     }
   }, [rawSaveString]);
 
-  // Auto-save whenever gameState changes and mission is active
-  // GUARANTEE: Never overwrite valid saved progress during initial mounting!
+  // Auto-save whenever gameState changes and mission is active:
+  // - Skips saving until after client hydration and restore check have committed (isRestored === true).
+  // - Never auto-saves an untouched pristine Day 1 mission, avoiding overwriting saves on mount or repopulating storage on replay.
+  // - Clears storage when the mission finishes (outcome !== 'active').
   useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
+    if (!isRestored) return;
     if (!autoSave) return;
+
     if (gameState.outcome === 'active') {
-      saveMission(gameState);
+      if (!isPristineMission(gameState)) {
+        saveMission(gameState);
+      }
     } else {
       // Mission reached terminal result (success or failure)
       clearSavedMission();
     }
-  }, [gameState, autoSave]);
+  }, [gameState, autoSave, isRestored]);
 
   // Notify parent on completion
   useEffect(() => {
@@ -202,5 +231,6 @@ export function useMission({
     clearSave: clearSavedMission,
     score: scoreMission(gameState),
     isEventPending: isEventPending(gameState),
+    isRestored,
   };
 }
