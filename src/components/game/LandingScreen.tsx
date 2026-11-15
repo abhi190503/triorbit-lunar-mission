@@ -56,7 +56,14 @@ export function LandingScreen({
 }: LandingScreenProps) {
   const [isTutorialOpen, setIsTutorialOpen] = useState(defaultTutorialOpen);
   const [imageFailed, setImageFailed] = useState(false);
-  const [internalMuted, setInternalMuted] = useState(soundscape.isMuted);
+  const [internalMuted, setInternalMuted] = useState(true);
+
+  // Restore audio preference post-mount for SSR hydration consistency
+  useEffect(() => {
+    const restored = soundscape.restorePreference();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInternalMuted(restored);
+  }, []);
 
   const activeMuted = isMuted !== undefined ? isMuted : internalMuted;
   const handleToggleSound = useCallback(() => {

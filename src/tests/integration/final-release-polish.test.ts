@@ -14,8 +14,20 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { hydrateRoot } from 'react-dom/client';
+import { JSDOM } from 'jsdom';
 import fs from 'node:fs';
 import path from 'node:path';
+
+async function waitFor(predicate: () => boolean, timeoutMs = 2000, intervalMs = 20): Promise<void> {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Timed out waiting for predicate after ${timeoutMs}ms`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+}
 
 // Components & Modules
 import { MissionScreen } from '@/components/game/MissionScreen';
@@ -54,6 +66,62 @@ describe('TRI-RELEASE: Audio System Verification', () => {
     const restored = soundscape.toggleSound();
     assert.equal(restored, startMuted);
   });
+
+  it('restores unmuted preference post-mount without SSR hydration mismatch and keeps audio locked until interaction', async () => {
+    const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', {
+      url: 'http://localhost:3000',
+    });
+    dom.window.localStorage.setItem('triorbit_sound_muted', 'false');
+
+    (globalThis as unknown as { window: unknown }).window = dom.window;
+    (globalThis as unknown as { document: unknown }).document = dom.window.document;
+    (globalThis as unknown as { HTMLElement: unknown }).HTMLElement = dom.window.HTMLElement;
+
+    try {
+      soundscape.cleanup();
+
+      // 1. SSR render: always defaults to muted state
+      const ssrTree = React.createElement(MissionScreen);
+      const ssrHtml = renderToString(ssrTree);
+      assert.ok(ssrHtml.includes('aria-label="Unmute Audio"'), 'SSR must render Unmute Audio button');
+
+      // 2. Client hydrateRoot: must have 0 recoverable hydration errors
+      const container = dom.window.document.getElementById('root')!;
+      container.innerHTML = ssrHtml;
+
+      const recoverableErrors: string[] = [];
+      const root = hydrateRoot(container, ssrTree, {
+        onRecoverableError(err: unknown) {
+          recoverableErrors.push((err as Error).message);
+        },
+      });
+
+      // Wait for effects to commit and preference to restore post-mount
+      await waitFor(() => Boolean(container.querySelector('button[aria-label="Mute Audio"]')));
+
+      assert.equal(recoverableErrors.length, 0, 'Must have zero hydration mismatch errors');
+
+      // 3. Post-mount restoration must reflect unmuted preference in UI
+      const button = container.querySelector('button[aria-label="Mute Audio"]');
+      assert.ok(button, 'UI should update to Mute Audio after post-mount preference restoration');
+      assert.equal(soundscape.isMuted, false);
+
+      // 4. BUT audio playback MUST remain locked until fresh user interaction
+      assert.equal(soundscape.isUnlocked, false, 'Playback must remain locked until user interaction');
+
+      // 5. Fresh user interaction unlocks playback
+      soundscape.unlockPlayback();
+      assert.equal(soundscape.isUnlocked, true);
+
+      root.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    } finally {
+      soundscape.cleanup();
+      delete (globalThis as unknown as { window?: unknown }).window;
+      delete (globalThis as unknown as { document?: unknown }).document;
+      delete (globalThis as unknown as { HTMLElement?: unknown }).HTMLElement;
+    }
+  });
 });
 
 describe('TRI-RELEASE: Branding and Favicon Verification', () => {
@@ -79,20 +147,155 @@ describe('TRI-RELEASE: Branding and Favicon Verification', () => {
 });
 
 describe('TRI-RELEASE: NASA Telemetry Labeling & Fallback Truthfulness', () => {
-  it('does NOT display misleading "Live Telemetry Connected" in initial render', () => {
+  it('does NOT display misleading "Live Telemetry Connected" or claim fallback data before request completes', () => {
     const html = renderToString(React.createElement(MissionScreen));
     assert.ok(
       !html.includes('Live Telemetry Connected'),
       'Must not display misleading Live Telemetry Connected'
     );
+    assert.ok(
+      !html.includes('NASA Verified Fallback Loaded'),
+      'Must not claim fallback data was loaded before API request completes'
+    );
+    assert.ok(
+      html.includes('NASA Archive Loading...'),
+      'Must display accurate loading state during SSR / initial render'
+    );
   });
 
-  it('renders verified historical/fallback label in SSR state', () => {
-    const html = renderToString(React.createElement(MissionScreen));
-    assert.ok(
-      html.includes('NASA Verified Fallback Loaded') || html.includes('NASA Historical Data Loaded'),
-      'Must display accurate NASA archive status'
-    );
+  it('accurately transitions from loading to live historical data when API confirms live observation', async () => {
+    const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', {
+      url: 'http://localhost:3000',
+    });
+
+    (globalThis as unknown as { window: unknown }).window = dom.window;
+    (globalThis as unknown as { document: unknown }).document = dom.window.document;
+    (globalThis as unknown as { HTMLElement: unknown }).HTMLElement = dom.window.HTMLElement;
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          events: [],
+          provenance: 'live',
+          retrievedAt: new Date().toISOString(),
+          caution: 'Test caution',
+        }),
+      } as unknown as Response;
+    }) as typeof fetch;
+
+    try {
+      const container = dom.window.document.getElementById('root')!;
+      const tree = React.createElement(MissionScreen);
+      container.innerHTML = renderToString(tree);
+
+      const root = hydrateRoot(container, tree);
+      await waitFor(() => container.innerHTML.includes('NASA Historical Data Loaded'));
+
+      assert.ok(
+        container.innerHTML.includes('NASA Historical Data Loaded'),
+        'Must display NASA Historical Data Loaded when API returns live provenance'
+      );
+      assert.ok(!container.innerHTML.includes('NASA Archive Loading...'));
+
+      root.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete (globalThis as unknown as { window?: unknown }).window;
+      delete (globalThis as unknown as { document?: unknown }).document;
+      delete (globalThis as unknown as { HTMLElement?: unknown }).HTMLElement;
+    }
+  });
+
+  it('accurately transitions from loading to verified fallback when API confirms fallback archive payload', async () => {
+    const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', {
+      url: 'http://localhost:3000',
+    });
+
+    (globalThis as unknown as { window: unknown }).window = dom.window;
+    (globalThis as unknown as { document: unknown }).document = dom.window.document;
+    (globalThis as unknown as { HTMLElement: unknown }).HTMLElement = dom.window.HTMLElement;
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          events: [],
+          provenance: 'verified-fallback',
+          retrievedAt: new Date().toISOString(),
+          caution: 'Test caution',
+        }),
+      } as unknown as Response;
+    }) as typeof fetch;
+
+    try {
+      const container = dom.window.document.getElementById('root')!;
+      const tree = React.createElement(MissionScreen);
+      container.innerHTML = renderToString(tree);
+
+      const root = hydrateRoot(container, tree);
+      await waitFor(() => container.innerHTML.includes('NASA Verified Fallback Loaded'));
+
+      assert.ok(
+        container.innerHTML.includes('NASA Verified Fallback Loaded'),
+        'Must display NASA Verified Fallback Loaded when confirmed by API payload'
+      );
+      assert.ok(!container.innerHTML.includes('NASA Archive Loading...'));
+
+      root.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete (globalThis as unknown as { window?: unknown }).window;
+      delete (globalThis as unknown as { document?: unknown }).document;
+      delete (globalThis as unknown as { HTMLElement?: unknown }).HTMLElement;
+    }
+  });
+
+  it('accurately transitions to unavailable when client request fails without confirmation', async () => {
+    const dom = new JSDOM('<!DOCTYPE html><html><body><div id="root"></div></body></html>', {
+      url: 'http://localhost:3000',
+    });
+
+    (globalThis as unknown as { window: unknown }).window = dom.window;
+    (globalThis as unknown as { document: unknown }).document = dom.window.document;
+    (globalThis as unknown as { HTMLElement: unknown }).HTMLElement = dom.window.HTMLElement;
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      throw new Error('Network fault / offline');
+    }) as typeof fetch;
+
+    try {
+      const container = dom.window.document.getElementById('root')!;
+      const tree = React.createElement(MissionScreen);
+      container.innerHTML = renderToString(tree);
+
+      const root = hydrateRoot(container, tree);
+      await waitFor(() => container.innerHTML.includes('NASA Archive Unavailable'));
+
+      assert.ok(
+        container.innerHTML.includes('NASA Archive Unavailable'),
+        'Must display NASA Archive Unavailable when network request fails'
+      );
+      assert.ok(
+        !container.innerHTML.includes('NASA Verified Fallback Loaded'),
+        'Must NEVER claim verified fallback data was loaded when request fails unconfirmed'
+      );
+
+      root.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete (globalThis as unknown as { window?: unknown }).window;
+      delete (globalThis as unknown as { document?: unknown }).document;
+      delete (globalThis as unknown as { HTMLElement?: unknown }).HTMLElement;
+    }
   });
 });
 

@@ -12,7 +12,10 @@
 
 export interface SoundEngine {
   isMuted: boolean;
+  isUnlocked: boolean;
   init: () => void;
+  unlockPlayback: () => boolean;
+  restorePreference: () => boolean;
   setMuted: (muted: boolean) => void;
   toggleSound: () => boolean;
   playFacilitySelect: () => void;
@@ -29,25 +32,78 @@ class WebAudioSoundscape implements SoundEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private ambientGain: GainNode | null = null;
+  private ambientFilter: BiquadFilterNode | null = null;
   private ambientOsc1: OscillatorNode | null = null;
   private ambientOsc2: OscillatorNode | null = null;
   private _isMuted = true;
+  private _isUnlocked = false;
   private isInitialized = false;
 
   constructor() {
+    this._isMuted = true;
+    this._isUnlocked = false;
+
+    // Attach passive one-time user interaction listeners in browser
     if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        // Sound is OFF by default unless user previously explicitly unmuted
-        this._isMuted = stored !== null ? stored === 'true' : true;
-      } catch {
-        this._isMuted = true;
-      }
+      const handleFirstInteraction = () => {
+        this.unlockPlayback();
+        window.removeEventListener('pointerdown', handleFirstInteraction);
+        window.removeEventListener('keydown', handleFirstInteraction);
+        window.removeEventListener('click', handleFirstInteraction);
+      };
+      window.addEventListener('pointerdown', handleFirstInteraction, { passive: true });
+      window.addEventListener('keydown', handleFirstInteraction, { passive: true });
+      window.addEventListener('click', handleFirstInteraction, { passive: true });
     }
   }
 
   get isMuted(): boolean {
     return this._isMuted;
+  }
+
+  get isUnlocked(): boolean {
+    return this._isUnlocked;
+  }
+
+  /**
+   * Safely restore audio preference from localStorage post-hydration.
+   * Guarantees SSR hydration consistency: initial state is always muted on both
+   * server and client, then restored post-mount without triggering autoplay.
+   */
+  public restorePreference(): boolean {
+    if (typeof window !== 'undefined' || typeof localStorage !== 'undefined') {
+      try {
+        const storage = typeof window !== 'undefined' ? window.localStorage : (typeof localStorage !== 'undefined' ? localStorage : null);
+        if (storage) {
+          const stored = storage.getItem(STORAGE_KEY);
+          if (stored !== null) {
+            this._isMuted = stored === 'true';
+          }
+        }
+      } catch {
+        this._isMuted = true;
+      }
+    }
+    return this._isMuted;
+  }
+
+  /**
+   * Explicitly unlocks audio playback following a fresh user gesture.
+   * In accordance with browser autoplay policies, AudioContext is never started
+   * or resumed until a user interaction has occurred on the page.
+   */
+  public unlockPlayback(): boolean {
+    if (this._isUnlocked) return true;
+    this._isUnlocked = true;
+
+    // If user preference had sound unmuted, start ambient drone upon first interaction
+    if (!this._isMuted) {
+      if (this.ensureContext() && this.masterGain && this.ctx) {
+        this.masterGain.gain.setTargetAtTime(0.25, this.ctx.currentTime, 0.05);
+        this.startAmbient();
+      }
+    }
+    return true;
   }
 
   public init(): void {
@@ -63,16 +119,15 @@ class WebAudioSoundscape implements SoundEngine {
       this.masterGain.connect(this.ctx.destination);
 
       this.isInitialized = true;
-
-      if (!this._isMuted) {
-        this.startAmbient();
-      }
     } catch {
       // Audio initialization failure must never block gameplay
     }
   }
 
   private ensureContext(): boolean {
+    // Block audio context creation and resumption until unlocked by user interaction
+    if (!this._isUnlocked) return false;
+
     if (!this.isInitialized) {
       this.init();
     }
@@ -96,7 +151,7 @@ class WebAudioSoundscape implements SoundEngine {
     }
 
     if (!muted) {
-      if (this.ensureContext() && this.masterGain && this.ctx) {
+      if (this._isUnlocked && this.ensureContext() && this.masterGain && this.ctx) {
         this.masterGain.gain.setTargetAtTime(0.25, this.ctx.currentTime, 0.05);
         this.startAmbient();
         this.playConfirmationTone();
@@ -110,6 +165,7 @@ class WebAudioSoundscape implements SoundEngine {
   }
 
   public toggleSound(): boolean {
+    this.unlockPlayback();
     const next = !this._isMuted;
     this.setMuted(next);
     return next;
@@ -345,7 +401,7 @@ class WebAudioSoundscape implements SoundEngine {
    * Dual ultra-low detuned sine drone through gentle low-pass filter at very low comfortable volume (0.02).
    */
   private startAmbient(): void {
-    if (this._isMuted || !this.ctx || !this.masterGain) return;
+    if (this._isMuted || !this._isUnlocked || !this.ctx || !this.masterGain) return;
     this.stopAmbient();
 
     try {
@@ -354,9 +410,9 @@ class WebAudioSoundscape implements SoundEngine {
       this.ambientGain.gain.setValueAtTime(0.001, now);
       this.ambientGain.gain.exponentialRampToValueAtTime(0.02, now + 1.5); // Smooth 1.5s fade-in
 
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(140, now);
+      this.ambientFilter = this.ctx.createBiquadFilter();
+      this.ambientFilter.type = 'lowpass';
+      this.ambientFilter.frequency.setValueAtTime(140, now);
 
       this.ambientOsc1 = this.ctx.createOscillator();
       this.ambientOsc1.type = 'sine';
@@ -366,9 +422,9 @@ class WebAudioSoundscape implements SoundEngine {
       this.ambientOsc2.type = 'sine';
       this.ambientOsc2.frequency.setValueAtTime(82.4, now); // E2 fifth
 
-      this.ambientOsc1.connect(filter);
-      this.ambientOsc2.connect(filter);
-      filter.connect(this.ambientGain);
+      this.ambientOsc1.connect(this.ambientFilter);
+      this.ambientOsc2.connect(this.ambientFilter);
+      this.ambientFilter.connect(this.ambientGain);
       this.ambientGain.connect(this.masterGain);
 
       this.ambientOsc1.start();
@@ -384,22 +440,46 @@ class WebAudioSoundscape implements SoundEngine {
         const now = this.ctx.currentTime;
         this.ambientGain.gain.setTargetAtTime(0, now, 0.2);
       }
-      if (this.ambientOsc1) {
+    } catch {
+      // Non-blocking
+    }
+
+    if (this.ambientOsc1) {
+      try {
         this.ambientOsc1.stop();
         this.ambientOsc1.disconnect();
-        this.ambientOsc1 = null;
+      } catch {
+        // Safe disposal
       }
-      if (this.ambientOsc2) {
+      this.ambientOsc1 = null;
+    }
+
+    if (this.ambientOsc2) {
+      try {
         this.ambientOsc2.stop();
         this.ambientOsc2.disconnect();
-        this.ambientOsc2 = null;
+      } catch {
+        // Safe disposal
       }
-      if (this.ambientGain) {
+      this.ambientOsc2 = null;
+    }
+
+    if (this.ambientFilter) {
+      try {
+        this.ambientFilter.disconnect();
+      } catch {
+        // Safe disposal
+      }
+      this.ambientFilter = null;
+    }
+
+    if (this.ambientGain) {
+      try {
         this.ambientGain.disconnect();
-        this.ambientGain = null;
+      } catch {
+        // Safe disposal
       }
-    } catch {
-      // Non-blocking cleanup
+      this.ambientGain = null;
     }
   }
 
@@ -415,6 +495,8 @@ class WebAudioSoundscape implements SoundEngine {
     }
     this.masterGain = null;
     this.isInitialized = false;
+    this._isUnlocked = false;
+    this._isMuted = true;
   }
 }
 

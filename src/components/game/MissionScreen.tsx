@@ -30,6 +30,8 @@ export interface MissionScreenProps {
   className?: string;
 }
 
+export type NasaArchiveStatus = 'loading' | 'live' | 'verified-fallback' | 'unavailable';
+
 export function MissionScreen({
   initialState,
   onMissionComplete,
@@ -51,8 +53,8 @@ export function MissionScreen({
   const [selectedModuleId, setSelectedModuleId] = useState<LunarModuleId | null>(null);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [isScienceOpen, setIsScienceOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(() => soundscape.isMuted);
-  const [nasaProvenance, setNasaProvenance] = useState<'live' | 'verified-fallback'>('verified-fallback');
+  const [isMuted, setIsMuted] = useState(true);
+  const [nasaStatus, setNasaStatus] = useState<NasaArchiveStatus>('loading');
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(() => ({
     text: 'Day 1 morning operations active. Select a lunar facility to inspect maintenance actions.',
     type: 'info',
@@ -63,6 +65,13 @@ export function MissionScreen({
     return () => {
       soundscape.cleanup();
     };
+  }, []);
+
+  // Restore sound preference from localStorage post-mount for Next.js hydration consistency
+  useEffect(() => {
+    const restoredMuted = soundscape.restorePreference();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMuted(restoredMuted);
   }, []);
 
   // Update feedback when saved progress is restored on client post-hydration
@@ -96,13 +105,18 @@ export function MissionScreen({
         return res.json();
       })
       .then((data: NASAEventsResponse) => {
-        if (active && data?.provenance) {
-          setNasaProvenance(data.provenance);
+        if (!active) return;
+        if (data?.provenance === 'live') {
+          setNasaStatus('live');
+        } else if (data?.provenance === 'verified-fallback') {
+          setNasaStatus('verified-fallback');
+        } else {
+          setNasaStatus('unavailable');
         }
       })
       .catch(() => {
         if (active) {
-          setNasaProvenance('verified-fallback');
+          setNasaStatus('unavailable');
         }
       });
 
@@ -298,13 +312,24 @@ export function MissionScreen({
                       : 'ℹ️'}
                   </span>
                   <span>{feedback.text}</span>
-                  {nasaProvenance === 'live' ? (
+                  {nasaStatus === 'loading' && (
+                    <span className="ml-2 text-[10px] font-mono uppercase bg-slate-800/80 text-slate-400 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
+                      NASA Archive Loading...
+                    </span>
+                  )}
+                  {nasaStatus === 'live' && (
                     <span className="ml-2 text-[10px] font-mono uppercase bg-cyan-900/60 text-cyan-300 px-2 py-0.5 rounded border border-cyan-700/50 whitespace-nowrap">
                       NASA Historical Data Loaded
                     </span>
-                  ) : (
+                  )}
+                  {nasaStatus === 'verified-fallback' && (
                     <span className="ml-2 text-[10px] font-mono uppercase bg-slate-800/80 text-slate-300 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
                       NASA Verified Fallback Loaded
+                    </span>
+                  )}
+                  {nasaStatus === 'unavailable' && (
+                    <span className="ml-2 text-[10px] font-mono uppercase bg-rose-950/60 text-rose-300 px-2 py-0.5 rounded border border-rose-800/50 whitespace-nowrap">
+                      NASA Archive Unavailable
                     </span>
                   )}
                 </div>
