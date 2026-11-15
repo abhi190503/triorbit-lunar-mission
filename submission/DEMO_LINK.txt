@@ -1,0 +1,9 @@
+TRI-026 — TriOrbit Online Demo
+
+Format: Six-slide presentation
+Title: TriOrbit — Lunar Survival Simulator (Junior Astronaut Mission Trainer)
+Public view-only URL: PENDING (Awaiting owner publication of verified six-slide deck to public Google Slides)
+Slide count: 6
+Tested application commit: 9613dea558c4dd48f8a2ad6f40c74ce0ceeb31b5
+Public access verification: PENDING (Deck storyboard and assets finalized; public link awaiting upload)
+Verification date: 14 November 2026

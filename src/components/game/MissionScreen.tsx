@@ -1,17 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { ActionId, GameScenario, GameState } from '@/lib/game/types';
 import type { LunarModuleId } from './ModuleHotspot';
-import {
-  createInitialMission,
-  executeAction,
-  executeFinishDay,
-  applyEventChoice,
-  scoreMission,
-  isEventPending,
-} from '@/lib/game/controller';
+import { scoreMission, isEventPending } from '@/lib/game/controller';
 import { DEFAULT_SCENARIOS } from '@/lib/game/constants';
+import { useMission } from '@/hooks/useMission';
 import {
   GameShell,
   MissionHUD,
@@ -40,8 +34,17 @@ export function MissionScreen({
   onMissionComplete,
   className = '',
 }: MissionScreenProps) {
-  // 1. Authoritative single source of truth for simulation GameState
-  const [gameState, setGameState] = useState<GameState>(() => initialState || createInitialMission());
+  // 1. Authoritative single source of truth for simulation GameState via useMission hook
+  const {
+    gameState,
+    executeAction: runAction,
+    finishDay: runFinishDay,
+    applyEventChoice: runEventChoice,
+    replayMission: resetMissionState,
+  } = useMission({
+    initialState,
+    onMissionComplete,
+  });
 
   // 2. UI interaction state (does NOT duplicate simulation physics)
   const [selectedModuleId, setSelectedModuleId] = useState<LunarModuleId | null>(null);
@@ -49,10 +52,22 @@ export function MissionScreen({
   const [isScienceOpen, setIsScienceOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [nasaProvenance, setNasaProvenance] = useState<'live' | 'verified-fallback'>('verified-fallback');
-  const [feedback, setFeedback] = useState<FeedbackMessage | null>({
+  const [feedback, setFeedback] = useState<FeedbackMessage | null>(() => ({
     text: 'Day 1 morning operations active. Select a lunar facility to inspect maintenance actions.',
     type: 'info',
-  });
+  }));
+
+  // Update feedback when saved progress is restored on client post-hydration
+  const hasAnnouncedRestoreRef = useRef(false);
+  useEffect(() => {
+    if (gameState.day > 1 && !hasAnnouncedRestoreRef.current) {
+      hasAnnouncedRestoreRef.current = true;
+      setFeedback({
+        text: `Saved mission restored: Day ${gameState.day} morning operations active.`,
+        type: 'info',
+      });
+    }
+  }, [gameState.day]);
 
   // Event modal is open whenever gameState is in mandatory event phase
   const isEventModalOpen = gameState.phase === 'event' && Boolean(gameState.currentScenarioId);
@@ -81,105 +96,89 @@ export function MissionScreen({
     };
   }, []);
 
-  // Notify parent on completion if callback provided
-  useEffect(() => {
-    if (gameState.phase === 'result' && onMissionComplete) {
-      onMissionComplete(gameState);
-    }
-  }, [gameState, onMissionComplete]);
-
   // Current scheduled scenario for event modal
   const currentScenario: GameScenario | null = useMemo(() => {
     if (!gameState.currentScenarioId) return null;
     return DEFAULT_SCENARIOS.find((s) => s.id === gameState.currentScenarioId) || null;
   }, [gameState.currentScenarioId]);
 
-  // 3. Command handler: Execute maintenance action via canonical controller
-  const handleExecuteAction = useCallback((actionId: ActionId) => {
-    setGameState((prevState) => {
-      const result = executeAction(prevState, actionId);
+  // 3. Command handler: Execute maintenance action via canonical useMission hook
+  const handleExecuteAction = useCallback(
+    (actionId: ActionId) => {
+      const result = runAction(actionId);
       if (!result.success) {
         setFeedback({
           text: result.reason || 'Action could not be executed.',
           type: 'warning',
         });
-        return prevState;
+        return;
       }
 
       setFeedback({
         text: `Operation executed successfully. Remaining actions today: ${result.state.actionsRemaining}.`,
         type: 'success',
       });
-      return result.state;
-    });
-  }, []);
+    },
+    [runAction]
+  );
 
-  // 4. Command handler: Conclude current day and apply baseline drain via controller
+  // 4. Command handler: Conclude current day and apply baseline drain via useMission hook
   const handleFinishDay = useCallback(() => {
-    setGameState((prevState) => {
-      const result = executeFinishDay(prevState);
-      if (!result.success) {
-        setFeedback({
-          text: result.reason || 'Cannot conclude the mission day right now.',
-          type: 'warning',
-        });
-        return prevState;
-      }
+    const result = runFinishDay();
+    if (!result.success) {
+      setFeedback({
+        text: result.reason || 'Cannot conclude the mission day right now.',
+        type: 'warning',
+      });
+      return;
+    }
 
-      const next = result.state;
-      if (next.outcome === 'failure') {
-        setFeedback({
-          text: 'Life support failure detected during night cycle. Mission aborted.',
-          type: 'error',
-        });
-      } else if (next.outcome === 'success') {
-        setFeedback({
-          text: 'Congratulations Commander! All 5 lunar days safely completed. Expedition won!',
-          type: 'success',
-        });
-      } else if (next.phase === 'event') {
-        setFeedback({
-          text: `Advanced to Day ${next.day}. Space weather dilemma detected! Commander action required.`,
-          type: 'warning',
-        });
-      } else {
-        setFeedback({
-          text: `Advanced to Day ${next.day}. Daily baseline life support drain applied. 2 actions available.`,
-          type: 'info',
-        });
-      }
+    const next = result.state;
+    if (next.outcome === 'failure') {
+      setFeedback({
+        text: 'Life support failure detected during night cycle. Mission aborted.',
+        type: 'error',
+      });
+    } else if (next.outcome === 'success') {
+      setFeedback({
+        text: 'Congratulations Commander! All 5 lunar days safely completed. Expedition won!',
+        type: 'success',
+      });
+    } else if (next.phase === 'event') {
+      setFeedback({
+        text: `Advanced to Day ${next.day}. Space weather dilemma detected! Commander action required.`,
+        type: 'warning',
+      });
+    } else {
+      setFeedback({
+        text: `Advanced to Day ${next.day}. Daily baseline life support drain applied. 2 actions available.`,
+        type: 'info',
+      });
+    }
+  }, [runFinishDay]);
 
-      return next;
-    });
-  }, []);
+  // 5. Command handler: Resolve mandatory event choice via useMission hook
+  const handleSelectEventChoice = useCallback(
+    (choiceId: string) => {
+      if (!gameState.currentScenarioId) return;
+      runEventChoice(gameState.currentScenarioId, choiceId);
+      setFeedback({
+        text: 'Space weather dilemma resolved. Daily maintenance operations unblocked.',
+        type: 'success',
+      });
+    },
+    [gameState.currentScenarioId, runEventChoice]
+  );
 
-  // 5. Command handler: Resolve mandatory event choice via canonical engine
-  const handleSelectEventChoice = useCallback((choiceId: string) => {
-    setGameState((prevState) => {
-      if (!prevState.currentScenarioId) return prevState;
-      return applyEventChoice(
-        prevState,
-        prevState.currentScenarioId,
-        choiceId,
-        DEFAULT_SCENARIOS
-      );
-    });
-
-    setFeedback({
-      text: 'Space weather dilemma resolved. Daily maintenance operations unblocked.',
-      type: 'success',
-    });
-  }, []);
-
-  // 6. Clean mission restart
+  // 6. Clean mission restart & replay
   const handleResetMission = useCallback(() => {
-    setGameState(createInitialMission());
+    resetMissionState();
     setSelectedModuleId(null);
     setFeedback({
       text: 'Mission reset. Expedition Day 1 initialized.',
       type: 'info',
     });
-  }, []);
+  }, [resetMissionState]);
 
   const isMissionConcluded = gameState.phase === 'result' || gameState.outcome !== 'active';
   const finalScore = useMemo(() => scoreMission(gameState), [gameState]);
