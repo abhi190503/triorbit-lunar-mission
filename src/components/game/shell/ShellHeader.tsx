@@ -37,14 +37,14 @@ export function ShellHeader({
       role="banner"
       className={`
         w-full bg-[#101D35]/95 backdrop-blur-md border-b border-[#1F3352]
-        px-3 sm:px-6 py-2.5 sm:py-3 z-30 select-none
+        px-2.5 sm:px-6 py-2 sm:py-3 z-30 select-none
         ${className}
       `}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Left: Mission Branding & Identity */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <span
               className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-[#60E5F4]/15 border border-[#60E5F4]/40 text-[#60E5F4] font-mono font-bold text-xs sm:text-sm shadow-[0_0_10px_rgba(96,229,244,0.3)] shrink-0"
               aria-hidden="true"
@@ -52,11 +52,11 @@ export function ShellHeader({
               ▲
             </span>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold tracking-wider text-xs sm:text-sm text-[#F4F7FC] uppercase font-mono">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-extrabold tracking-wider text-xs sm:text-sm text-[#F4F7FC] uppercase font-mono whitespace-nowrap">
                   TriOrbit
                 </span>
-                <span className="hidden md:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#162640] text-[#60E5F4] border border-[#1F3352]">
+                <span className="hidden md:inline-block text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#162640] text-[#60E5F4] border border-[#1F3352] whitespace-nowrap">
                   LUNAR COMMAND
                 </span>
               </div>
@@ -69,16 +69,17 @@ export function ShellHeader({
           {/* Telemetry Status Pills (Desktop & Tablet) */}
           {day !== undefined && (
             <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-[#1F3352]">
-              <GameBadge variant="cyan" size="sm">
+              <GameBadge variant="cyan" size="sm" className="whitespace-nowrap">
                 Day {day} / {maxDays}
               </GameBadge>
-              <GameBadge variant="nominal" size="sm" pulse>
+              <GameBadge variant="nominal" size="sm" pulse className="whitespace-nowrap">
                 Crew: {crewCount} {crewStatus}
               </GameBadge>
               {actionsRemaining !== undefined && (
                 <GameBadge
                   variant={actionsRemaining > 0 ? 'amber' : 'muted'}
                   size="sm"
+                  className="whitespace-nowrap"
                 >
                   Actions: {actionsRemaining} / {maxActions}
                 </GameBadge>
@@ -89,15 +90,15 @@ export function ShellHeader({
 
         {/* Center: Mobile Day Indicator (< 640px) */}
         {day !== undefined && (
-          <div className="flex lg:hidden items-center gap-1.5 shrink-0">
-            <GameBadge variant="cyan" size="sm">
+          <div className="flex lg:hidden items-center gap-1 shrink-0">
+            <GameBadge variant="cyan" size="sm" className="whitespace-nowrap shrink-0">
               Day {day}/{maxDays}
             </GameBadge>
             {actionsRemaining !== undefined && (
               <GameBadge
                 variant={actionsRemaining > 0 ? 'amber' : 'muted'}
                 size="sm"
-                className="hidden sm:inline-flex max-[380px]:hidden"
+                className="whitespace-nowrap shrink-0 hidden sm:inline-flex max-[380px]:hidden"
               >
                 {actionsRemaining}/{maxActions}
               </GameBadge>
@@ -106,13 +107,13 @@ export function ShellHeader({
         )}
 
         {/* Right: Controls & Navigation Slots */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {onOpenScience && (
             <button
               type="button"
               onClick={onOpenScience}
               aria-label="Open NASA Science Drawer"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#162640] text-[#60E5F4] border border-[#1F3352] hover:border-[#60E5F4] hover:bg-[#203653] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[44px] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#162640] text-[#60E5F4] border border-[#1F3352] hover:border-[#60E5F4] hover:bg-[#203653] transition-colors focus-visible:ring-2 focus-visible:ring-[#60E5F4] focus-visible:outline-none min-h-[44px] min-w-[40px] sm:min-w-[44px] justify-center cursor-pointer shrink-0"
             >
               <svg
                 className="w-3.5 h-3.5"

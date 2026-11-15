@@ -86,11 +86,11 @@ export function ActionControls({
               <span className="text-xl" aria-hidden="true">
                 {selectedConfig.shortIcon}
               </span>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-[#F4F7FC]">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base sm:text-lg font-bold text-[#F4F7FC] break-words">
                   {selectedConfig.name}
                 </h3>
-                <p className="text-xs text-[#A8B8D0] font-normal">
+                <p className="text-xs text-[#A8B8D0] font-normal truncate">
                   {selectedConfig.subsystem}
                 </p>
               </div>
@@ -143,16 +143,16 @@ export function ActionControls({
                   {/* Left: Action Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="text-sm sm:text-base font-semibold text-[#F4F7FC]">
+                      <h4 className="text-sm sm:text-base font-semibold text-[#F4F7FC] break-words">
                         {action.name}
                       </h4>
                       {/* Yield Badge */}
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 whitespace-nowrap shrink-0">
                         {action.yieldSummary}
                       </span>
                       {/* Cost Badge */}
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap shrink-0 ${
                           action.costSummary === '0 Cost'
                             ? 'bg-slate-900 text-slate-400 border border-slate-800'
                             : 'bg-amber-950/80 text-amber-300 border border-amber-800/60'
@@ -243,7 +243,7 @@ export function ActionControls({
                   <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">
                     {m.shortIcon}
                   </span>
-                  <span className="text-xs font-semibold text-[#F4F7FC]">
+                  <span className="text-xs font-semibold text-[#F4F7FC] leading-snug break-words line-clamp-2 px-1">
                     {m.name}
                   </span>
                   <span className="text-[10px] text-[#60E5F4] font-mono mt-0.5">

@@ -73,7 +73,7 @@ export function GameBadge({
   return (
     <span
       className={`
-        inline-flex items-center font-mono font-medium tracking-wide uppercase border select-none
+        inline-flex items-center font-mono font-medium tracking-wide uppercase border select-none whitespace-nowrap shrink-0
         ${styles.container}
         ${SIZE_STYLES[size]}
         ${className}

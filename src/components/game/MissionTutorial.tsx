@@ -431,7 +431,7 @@ export function MissionTutorial({
                 Survival Condition:
               </span>
               <p>
-                To achieve <strong>Mission Accomplished</strong>, reach Day 5 with all 4 essentials &gt; 0 and Radiation Risk &lt; 100. If any vital hits 0 or Radiation hits 100, the mission aborts immediately!
+                To achieve <strong>Mission Accomplished</strong>, complete all five mission days while keeping Oxygen, Power, Water and Food above zero and Radiation Risk below 100. If any vital hits 0 or Radiation hits 100, the mission aborts immediately!
               </p>
             </div>
           </div>

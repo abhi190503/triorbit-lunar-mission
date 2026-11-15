@@ -120,10 +120,10 @@ export function EventModal({ scenario, onSelectChoice, open }: EventModalProps) 
         aria-labelledby="event-modal-title"
         aria-describedby="event-modal-desc"
         onKeyDown={handleKeyDown}
-        className="w-full max-w-2xl my-auto rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl shadow-cyan-950/40 p-5 sm:p-7 text-slate-100 flex flex-col space-y-5 animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-2xl my-auto rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl shadow-cyan-950/40 p-4 sm:p-7 text-slate-100 flex flex-col space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
       >
         {/* Header / Day Badge */}
-        <header className="space-y-2 border-b border-slate-800 pb-4">
+        <header className="space-y-2 border-b border-slate-800 pb-3 sm:pb-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-semibold tracking-wider uppercase bg-cyan-950 text-cyan-300 border border-cyan-800">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" aria-hidden="true" />
@@ -131,11 +131,11 @@ export function EventModal({ scenario, onSelectChoice, open }: EventModalProps) 
             </span>
 
             {isNASA ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-950/90 text-blue-300 border border-blue-800/80">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-950/90 text-blue-300 border border-blue-800/80 whitespace-nowrap">
                 NASA Observation
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950/90 text-amber-300 border border-amber-800/80">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-950/90 text-amber-300 border border-amber-800/80 whitespace-nowrap">
                 Educational Simulation
               </span>
             )}
@@ -153,7 +153,7 @@ export function EventModal({ scenario, onSelectChoice, open }: EventModalProps) 
             className="p-3.5 sm:p-4 rounded-xl bg-blue-950/40 border border-blue-800/60 text-xs text-blue-200 space-y-2"
           >
             <div className="flex items-center justify-between gap-2 font-mono uppercase tracking-wider text-[11px] text-blue-300 font-semibold border-b border-blue-900/60 pb-1.5">
-              <span>Telemetry: {scenario.source.source}</span>
+              <span>Data Source: {scenario.source.source} (Historical Archive)</span>
               <span>Observed: {new Date(scenario.source.occurredAt).toUTCString()}</span>
             </div>
 
@@ -174,7 +174,7 @@ export function EventModal({ scenario, onSelectChoice, open }: EventModalProps) 
             <p className="text-[11px] text-slate-400 leading-normal border-t border-blue-900/40 pt-1.5">
               <strong className="text-blue-200">Scientific Caution:</strong> NASA DONKI records
               interplanetary space weather observations; they do not represent biological radiation
-              absorption on the lunar surface.
+              absorption on the lunar surface. In-game Radiation Risk points (0–100) are educational game units.
             </p>
           </aside>
         )}
@@ -182,8 +182,7 @@ export function EventModal({ scenario, onSelectChoice, open }: EventModalProps) 
         {/* Educational Simulation Notice */}
         {!isNASA && (
           <aside className="p-3 rounded-lg bg-slate-950/50 border border-slate-800 text-xs text-slate-400 font-mono">
-            <strong>Training Simulation:</strong> Fictional lunar outpost dilemma. Manage life-support
-            systems and tactical resource consumption.
+            <strong>Training Simulation:</strong> Fictional lunar outpost dilemma. Resource impacts are educational simulation game points, not actual physical engineering measurements.
           </aside>
         )}
 

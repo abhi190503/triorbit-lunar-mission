@@ -12,7 +12,10 @@ export const metadata: Metadata = {
   description:
     "Junior Astronaut Mission Trainer for NASA Space Apps Challenge 2026. Manage vital resources across 5 simulated lunar days.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
   },
 };
 
