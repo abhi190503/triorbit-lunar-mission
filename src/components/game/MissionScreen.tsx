@@ -5,6 +5,7 @@ import type { ActionId, GameScenario, GameState } from '@/lib/game/types';
 import type { LunarModuleId } from './ModuleHotspot';
 import { scoreMission, isEventPending } from '@/lib/game/controller';
 import { DEFAULT_SCENARIOS } from '@/lib/game/constants';
+import { soundscape } from '@/lib/audio/soundscape';
 import { useMission } from '@/hooks/useMission';
 import {
   GameShell,
@@ -29,6 +30,8 @@ export interface MissionScreenProps {
   className?: string;
 }
 
+export type NasaArchiveStatus = 'loading' | 'live' | 'verified-fallback' | 'unavailable';
+
 export function MissionScreen({
   initialState,
   onMissionComplete,
@@ -50,12 +53,26 @@ export function MissionScreen({
   const [selectedModuleId, setSelectedModuleId] = useState<LunarModuleId | null>(null);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [isScienceOpen, setIsScienceOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [nasaProvenance, setNasaProvenance] = useState<'live' | 'verified-fallback'>('verified-fallback');
+  const [isMuted, setIsMuted] = useState(true);
+  const [nasaStatus, setNasaStatus] = useState<NasaArchiveStatus>('loading');
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(() => ({
     text: 'Day 1 morning operations active. Select a lunar facility to inspect maintenance actions.',
     type: 'info',
   }));
+
+  // Cleanly dispose audio nodes on unmount
+  useEffect(() => {
+    return () => {
+      soundscape.cleanup();
+    };
+  }, []);
+
+  // Restore sound preference from localStorage post-mount for Next.js hydration consistency
+  useEffect(() => {
+    const restoredMuted = soundscape.restorePreference();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMuted(restoredMuted);
+  }, []);
 
   // Update feedback when saved progress is restored on client post-hydration
   const hasAnnouncedRestoreRef = useRef(false);
@@ -72,6 +89,13 @@ export function MissionScreen({
   // Event modal is open whenever gameState is in mandatory event phase
   const isEventModalOpen = gameState.phase === 'event' && Boolean(gameState.currentScenarioId);
 
+  // Play restrained warning cue when emergency dilemma triggers
+  useEffect(() => {
+    if (isEventModalOpen) {
+      soundscape.playEmergencyWarning();
+    }
+  }, [isEventModalOpen]);
+
   // Fetch NASA DONKI observations on mount to verify live route or fallback
   useEffect(() => {
     let active = true;
@@ -81,13 +105,18 @@ export function MissionScreen({
         return res.json();
       })
       .then((data: NASAEventsResponse) => {
-        if (active && data?.provenance) {
-          setNasaProvenance(data.provenance);
+        if (!active) return;
+        if (data?.provenance === 'live') {
+          setNasaStatus('live');
+        } else if (data?.provenance === 'verified-fallback') {
+          setNasaStatus('verified-fallback');
+        } else {
+          setNasaStatus('unavailable');
         }
       })
       .catch(() => {
         if (active) {
-          setNasaProvenance('verified-fallback');
+          setNasaStatus('unavailable');
         }
       });
 
@@ -102,6 +131,14 @@ export function MissionScreen({
     return DEFAULT_SCENARIOS.find((s) => s.id === gameState.currentScenarioId) || null;
   }, [gameState.currentScenarioId]);
 
+  // Module selection with gentle acoustic feedback
+  const handleSelectModule = useCallback((moduleId: LunarModuleId | null) => {
+    setSelectedModuleId(moduleId);
+    if (moduleId) {
+      soundscape.playFacilitySelect();
+    }
+  }, []);
+
   // 3. Command handler: Execute maintenance action via canonical useMission hook
   const handleExecuteAction = useCallback(
     (actionId: ActionId) => {
@@ -113,6 +150,8 @@ export function MissionScreen({
         });
         return;
       }
+
+      soundscape.playMaintenanceSuccess();
 
       setFeedback({
         text: `Operation executed successfully. Remaining actions today: ${result.state.actionsRemaining}.`,
@@ -135,18 +174,32 @@ export function MissionScreen({
 
     const next = result.state;
     if (next.outcome === 'failure') {
+      soundscape.playFailure();
       setFeedback({
         text: 'Life support failure detected during night cycle. Mission aborted.',
         type: 'error',
       });
     } else if (next.outcome === 'success') {
+      soundscape.playVictory();
       setFeedback({
         text: 'Congratulations Commander! All 5 lunar days safely completed. Expedition won!',
         type: 'success',
       });
     } else if (next.phase === 'event') {
+      soundscape.playEmergencyWarning();
+      const isSolar = next.currentScenarioId === 'solar-activity';
+      const isElectrical = next.currentScenarioId === 'power-outage';
+      const isIrrigation = next.currentScenarioId === 'greenhouse-water';
+      const eventLabel = isSolar
+        ? 'Space weather dilemma detected!'
+        : isElectrical
+        ? 'Habitat electrical emergency detected!'
+        : isIrrigation
+        ? 'Hydroponics irrigation emergency detected!'
+        : 'Mission emergency detected!';
+
       setFeedback({
-        text: `Advanced to Day ${next.day}. Space weather dilemma detected! Commander action required.`,
+        text: `Advanced to Day ${next.day}. ${eventLabel} Commander action required.`,
         type: 'warning',
       });
     } else {
@@ -161,9 +214,20 @@ export function MissionScreen({
   const handleSelectEventChoice = useCallback(
     (choiceId: string) => {
       if (!gameState.currentScenarioId) return;
-      runEventChoice(gameState.currentScenarioId, choiceId);
+      const scenarioId = gameState.currentScenarioId;
+      runEventChoice(scenarioId, choiceId);
+
+      let message = 'Mission emergency resolved. Daily maintenance operations available.';
+      if (scenarioId === 'solar-activity') {
+        message = 'Space weather dilemma resolved. Daily maintenance operations unblocked.';
+      } else if (scenarioId === 'power-outage') {
+        message = 'Electrical emergency resolved. Daily maintenance operations available.';
+      } else if (scenarioId === 'greenhouse-water') {
+        message = 'Hydroponics irrigation emergency resolved. Daily maintenance operations available.';
+      }
+
       setFeedback({
-        text: 'Space weather dilemma resolved. Daily maintenance operations unblocked.',
+        text: message,
         type: 'success',
       });
     },
@@ -180,6 +244,12 @@ export function MissionScreen({
     });
   }, [resetMissionState]);
 
+  // Sound toggle handler
+  const handleToggleSound = useCallback(() => {
+    const nextMuted = soundscape.toggleSound();
+    setIsMuted(nextMuted);
+  }, []);
+
   const isMissionConcluded = gameState.phase === 'result' || gameState.outcome !== 'active';
   const finalScore = useMemo(() => scoreMission(gameState), [gameState]);
 
@@ -193,7 +263,7 @@ export function MissionScreen({
         maxActions: 2,
         onOpenHelp: () => setIsTutorialOpen(true),
         onOpenScience: () => setIsScienceOpen(true),
-        onToggleSound: () => setIsMuted((prev) => !prev),
+        onToggleSound: handleToggleSound,
         isMuted,
       }}
       footerProps={{
@@ -242,9 +312,24 @@ export function MissionScreen({
                       : 'ℹ️'}
                   </span>
                   <span>{feedback.text}</span>
-                  {nasaProvenance === 'live' && (
-                    <span className="ml-2 text-[10px] font-mono uppercase bg-cyan-900/60 text-cyan-300 px-2 py-0.5 rounded border border-cyan-700/50">
-                      Live Telemetry Connected
+                  {nasaStatus === 'loading' && (
+                    <span className="ml-2 text-[10px] font-mono uppercase bg-slate-800/80 text-slate-400 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
+                      NASA Archive Loading...
+                    </span>
+                  )}
+                  {nasaStatus === 'live' && (
+                    <span className="ml-2 text-[10px] font-mono uppercase bg-cyan-900/60 text-cyan-300 px-2 py-0.5 rounded border border-cyan-700/50 whitespace-nowrap">
+                      NASA Historical Data Loaded
+                    </span>
+                  )}
+                  {nasaStatus === 'verified-fallback' && (
+                    <span className="ml-2 text-[10px] font-mono uppercase bg-slate-800/80 text-slate-300 px-2 py-0.5 rounded border border-slate-700/60 whitespace-nowrap">
+                      NASA Verified Fallback Loaded
+                    </span>
+                  )}
+                  {nasaStatus === 'unavailable' && (
+                    <span className="ml-2 text-[10px] font-mono uppercase bg-rose-950/60 text-rose-300 px-2 py-0.5 rounded border border-rose-800/50 whitespace-nowrap">
+                      NASA Archive Unavailable
                     </span>
                   )}
                 </div>
@@ -270,7 +355,7 @@ export function MissionScreen({
                 >
                   <LunarBaseScene
                     selectedModuleId={selectedModuleId}
-                    onSelectModule={setSelectedModuleId}
+                    onSelectModule={handleSelectModule}
                     actionsRemaining={gameState.actionsRemaining}
                     disabled={gameState.outcome !== 'active' || isEventPending(gameState)}
                   />
@@ -282,7 +367,7 @@ export function MissionScreen({
                   state={gameState}
                   actionsRemaining={gameState.actionsRemaining}
                   onExecuteAction={handleExecuteAction}
-                  onSelectModule={setSelectedModuleId}
+                  onSelectModule={handleSelectModule}
                   disabled={gameState.outcome !== 'active' || isEventPending(gameState)}
                 />
               </div>

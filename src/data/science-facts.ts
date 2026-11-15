@@ -30,7 +30,7 @@ export const SCIENCE_FACTS: ScienceFact[] = [
     explanation:
       "When powerful solar flares erupt on the Sun, they can blast streams of tiny particles called protons into space at nearly the speed of light. NASA satellites monitor these Solar Energetic Particle (SEP) storms to warn space explorers before the particles arrive.",
     gameplayConnection:
-      "In the Day 2 mission dilemma, an authentic SEP alert alerts you to move your crew into the underground bunker to stay safe from the solar storm.",
+      "In the Day 2 mission dilemma, an authentic SEP warning prompts you to shelter your crew in the underground regolith bunker to stay safe from the solar storm.",
     sourceName: "NASA CCMC DONKI (Event 2024-05-11T04:07:00-SEP-001)",
     sourceUrl: "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30717/-1",
     category: "NASA-observation",
