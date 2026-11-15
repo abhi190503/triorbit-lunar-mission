@@ -277,7 +277,7 @@ export function LunarBaseScene({
                 <span className="text-base" aria-hidden="true">
                   {module.shortIcon}
                 </span>
-                <div className="flex flex-col text-left overflow-hidden">
+                <div className="flex flex-col text-left min-w-0 flex-1 overflow-hidden">
                   <span className="font-display uppercase tracking-wider text-[11px] truncate">
                     {module.displayLabel}
                   </span>

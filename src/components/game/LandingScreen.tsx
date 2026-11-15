@@ -7,6 +7,7 @@ import { GamePanel } from './shell/GamePanel';
 import { GameBadge } from './shell/GameBadge';
 import { MissionTutorial } from './MissionTutorial';
 import { TOTAL_MISSION_DAYS, MAX_ACTIONS_PER_DAY } from '@/lib/game/contracts';
+import { soundscape } from '@/lib/audio/soundscape';
 
 export interface LandingScreenProps {
   /**
@@ -50,11 +51,29 @@ export function LandingScreen({
   defaultTutorialOpen = false,
   backgroundImageUrl,
   onToggleSound,
-  isMuted = false,
+  isMuted,
   className = '',
 }: LandingScreenProps) {
   const [isTutorialOpen, setIsTutorialOpen] = useState(defaultTutorialOpen);
   const [imageFailed, setImageFailed] = useState(false);
+  const [internalMuted, setInternalMuted] = useState(true);
+
+  // Restore audio preference post-mount for SSR hydration consistency
+  useEffect(() => {
+    const restored = soundscape.restorePreference();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInternalMuted(restored);
+  }, []);
+
+  const activeMuted = isMuted !== undefined ? isMuted : internalMuted;
+  const handleToggleSound = useCallback(() => {
+    if (onToggleSound) {
+      onToggleSound();
+    } else {
+      const next = soundscape.toggleSound();
+      setInternalMuted(next);
+    }
+  }, [onToggleSound]);
 
   const handleOpenTutorial = useCallback(() => {
     setIsTutorialOpen(true);
@@ -128,8 +147,8 @@ export function LandingScreen({
       layoutMode="full"
       headerProps={{
         onOpenHelp: handleOpenTutorial,
-        onToggleSound: onToggleSound,
-        isMuted: isMuted,
+        onToggleSound: handleToggleSound,
+        isMuted: activeMuted,
       }}
       footerProps={{
         showAiDisclosure: true,
@@ -205,24 +224,24 @@ export function LandingScreen({
             <span>NASA Space Apps Challenge 2026 • Colombo</span>
           </div>
 
-          {/* Main Title & Subtitle */}
-          <div className="space-y-3 max-w-3xl">
+          {/* Main Title & Subtitle Card with enhanced contrast backdrop */}
+          <div className="space-y-3 max-w-3xl rounded-2xl bg-[#080F20]/75 backdrop-blur-md p-5 sm:p-7 border border-[#1F3352]/70 shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
             <div className="flex items-center justify-center gap-2">
               <span className="font-mono text-xs uppercase tracking-widest text-[#A8B8D0]">
                 Junior Astronaut Mission Trainer
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#F4F7FC] font-sans">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#F4F7FC] font-sans drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
               TRIORBIT <span className="text-[#60E5F4]">LUNAR SURVIVAL</span> SIMULATOR
             </h1>
 
             {/* Figma Make Hero Headline */}
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FFCA72] tracking-normal font-sans pt-1">
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FFCA72] tracking-normal font-sans pt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
               Your Moon Mission Starts Here.
             </p>
 
-            <p className="text-sm sm:text-base md:text-lg text-[#A8B8D0] max-w-2xl mx-auto leading-relaxed pt-1">
+            <p className="text-sm sm:text-base md:text-lg text-[#E2E8F0] font-medium max-w-2xl mx-auto leading-relaxed pt-1 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
               Command an advanced lunar outpost. Balance critical life support. Survive {TOTAL_MISSION_DAYS} simulated days of space weather hazards.
             </p>
           </div>

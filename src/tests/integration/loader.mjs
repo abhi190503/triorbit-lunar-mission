@@ -23,7 +23,7 @@ export async function resolve(specifier, context, defaultResolve) {
   }
 
   // If path is absolute or relative without extension
-  if (resolvedSpecifier.startsWith('/') || resolvedSpecifier.startsWith('.')) {
+  if (resolvedSpecifier.startsWith('/') || resolvedSpecifier.startsWith('.') || path.isAbsolute(resolvedSpecifier)) {
     const candidatePath = resolvedSpecifier.startsWith('file://')
       ? url.fileURLToPath(resolvedSpecifier)
       : path.isAbsolute(resolvedSpecifier)
